@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>MapReduce编程实践1</title>
+    <url>/2020/04/08/Large-scaleDistributedSystem01/</url>
+    <content><![CDATA[<h3 id="MapReduce"><a href="#MapReduce" class="headerlink" title="MapReduce"></a>MapReduce</h3><p>MapReduce是一种新的分布式并行计算框架，能够在HDFS和Yarn的支持下完成海量大数据计算与处理的任务。最早起源于Google的GFS系统，是Google为了处理PB级别的网页数据而设计的。<br>MapReduce的优势在于可以对海量数据进行并行计算，并且能够高效的部署在廉价的计算机集群上，因而受到广泛使用。它的基本思想是分而治之。</p>
+<p>MapReduce借鉴了函数式程序设计语言Lisp中的思想，定义了如下的Map和Reduce两个抽象的编程接口，由用户去编程实现:</p>
+<ul>
+<li>Map: (k1; v1) -&gt; [(k2; v2)]</li>
+<li>Reduce: : (k2; [v2]) -&gt; [(k3; v3)]</li>
+</ul>
+<p>各个map函数对所划分的数据并行处理，从不同的输入数据产生不同的中间结果输出。<br>各个reduce也各自并行计算，各自负责处理不同的中间结果数据集合。</p>
+<a id="more"></a>
+
+<h3 id="本次任务"><a href="#本次任务" class="headerlink" title="本次任务"></a>本次任务</h3><p>编写MR程序（java或python）对sample.txt中有关文件信息进行处理，任务如下：<br>&nbsp;&nbsp;&nbsp;&nbsp;1.统计其中各类文件的数量（按文件名后缀区分类型）<br>&nbsp;&nbsp;&nbsp;&nbsp;2.按文件的字节数大小降序排序输出文件名</p>
+<p>sample.txt 包含85行建筑设计中的各类文件信息，数据片段和格式说明如下:</p>
+<table>
+    <tr>
+        <th rowspan="3">sample.txt</th>
+        <th>日期</th>
+        <th>时间</th>
+        <th>字节数</th>
+        <th>文件名（后缀为dwg）</th>
+    </tr>
+    <tr>
+        <td>2014/10/21</td>
+        <td>07:30</td>
+        <td>3,395,145</td>
+        <td>02-01一层平面图.dwg</td>
+    </tr>
+    <tr>
+        <td>2014/10/21</td>
+        <td>07:29</td>
+        <td>924,099</td>
+        <td>02-02二层平面图.dwg</td>
+</tr></table>
+
+<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><p>环境配置</p>
+<ul>
+<li>java: open jdk-7</li>
+<li>hadoop: 2.9.2</li>
+<li>python: 3.5<ul>
+<li>mrjob 0.7.1</li>
+</ul>
+</li>
+</ul>
+<h4 id="统计各类文件的数量"><a href="#统计各类文件的数量" class="headerlink" title="统计各类文件的数量"></a>统计各类文件的数量</h4><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> mrjob.job <span class="keyword">import</span> MRJob</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"></span><br><span class="line">pattern1 = <span class="string">r"[0-9]*,*[0-9]+,[0-9]&#123;3&#125;"</span> <span class="comment"># number of bytes</span></span><br><span class="line">pattern2 = <span class="string">r"\.[a-z]+"</span> <span class="comment"># file type</span></span><br><span class="line">pattern3 = <span class="string">r" [^ ]+\.[a-z]+$"</span> <span class="comment"># file name</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">str2int</span><span class="params">(input)</span>:</span></span><br><span class="line">    a = <span class="string">""</span>.join(input.split(<span class="string">','</span>))</span><br><span class="line">    <span class="keyword">return</span> int(a)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CountWorker</span><span class="params">(MRJob)</span>:</span></span><br><span class="line">    <span class="string">""" Count the number of each type of files. """</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mapper</span><span class="params">(self, file_name, line)</span>:</span></span><br><span class="line">        <span class="string">""" Input Context: Date, Time, #Bytes, Name """</span></span><br><span class="line">        file_type = re.search(pattern2, line).group()[<span class="number">1</span>:]</span><br><span class="line">        <span class="keyword">yield</span> file_type, <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">reducer</span><span class="params">(self, key, values)</span>:</span></span><br><span class="line">        <span class="keyword">yield</span> key, sum(values)</span><br></pre></td></tr></table></figure>
+
+<h4 id="按文件字节数降序输出文件名"><a href="#按文件字节数降序输出文件名" class="headerlink" title="按文件字节数降序输出文件名"></a>按文件字节数降序输出文件名</h4><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RankWorker</span><span class="params">(MRJob)</span>:</span></span><br><span class="line">    <span class="string">""" Ranking in the descending order of #Bytes. """</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mapper</span><span class="params">(self, file_name, line)</span>:</span></span><br><span class="line">        <span class="string">""" Input Context: Date, Time, #Bytes, Name """</span></span><br><span class="line">        num_bytes = str2int(re.search(pattern1, line).group())</span><br><span class="line">        Name = re.search(pattern3, line).group()[<span class="number">1</span>:]</span><br><span class="line">        <span class="keyword">yield</span> <span class="number">1</span>, (num_bytes, Name)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">reducer</span><span class="params">(self, key, values)</span>:</span></span><br><span class="line">        values = sorted(values)</span><br><span class="line">        <span class="keyword">for</span> num_bytes, Name <span class="keyword">in</span> values[::<span class="number">-1</span>]:</span><br><span class="line">            <span class="keyword">yield</span> num_bytes, Name</span><br></pre></td></tr></table></figure>
+
+<h4 id="输出中文乱码问题"><a href="#输出中文乱码问题" class="headerlink" title="输出中文乱码问题"></a>输出中文乱码问题</h4><p>注意，这里由于一开始的时候没有对sample.txt文件进行转码，而且由于MRjob的输出设定，返回的字符串并不是utf-8编码的。因此需要手动进行一下解码（可能需要多次尝试）。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">deal_with_output</span><span class="params">(file_path)</span>:</span></span><br><span class="line">    lines = []</span><br><span class="line">    <span class="keyword">with</span> open(file_path, <span class="string">"r"</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">            line = f.readline()</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> line: <span class="keyword">break</span></span><br><span class="line">            tmp = line.strip().split(<span class="string">"\t"</span>)</span><br><span class="line">            </span><br><span class="line">            num_bytes = int(tmp[<span class="number">0</span>])</span><br><span class="line">            name = <span class="string">""</span>.join([tmp[<span class="number">1</span>][<span class="number">1</span>:<span class="number">-1</span>]])</span><br><span class="line">            </span><br><span class="line">            print(num_bytes, name.encode(<span class="string">"iso-8859-1"</span>).decode(<span class="string">"gb18030"</span>))</span><br><span class="line">            <span class="comment"># 这里还是有bug，建议根据情况自己试一下</span></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>课程</category>
+      </categories>
+      <tags>
+        <tag>大规模分布式系统</tag>
+        <tag>Hadoop</tag>
+        <tag>MapReduce</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2020/04/07/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+]]></content>
+  </entry>
+</search>

@@ -70,6 +70,84 @@
     
     
     
+    <article id="post-Large-scaleDistributedSystem01" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/2020/04/08/Large-scaleDistributedSystem01/"
+    >MapReduce编程实践1</a> 
+</h2>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/04/08/Large-scaleDistributedSystem01/" class="article-date">
+  <time datetime="2020-04-07T16:53:48.000Z" itemprop="datePublished">2020-04-08</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E8%AF%BE%E7%A8%8B/">课程</a>
+  </div>
+
+      
+      
+      
+    </div>
+    
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h3 id="MapReduce"><a href="#MapReduce" class="headerlink" title="MapReduce"></a>MapReduce</h3><p>MapReduce是一种新的分布式并行计算框架，能够在HDFS和Yarn的支持下完成海量大数据计算与处理的任务。最早起源于Google的GFS系统，是Google为了处理PB级别的网页数据而设计的。<br>MapReduce的优势在于可以对海量数据进行并行计算，并且能够高效的部署在廉价的计算机集群上，因而受到广泛使用。它的基本思想是分而治之。</p>
+<p>MapReduce借鉴了函数式程序设计语言Lisp中的思想，定义了如下的Map和Reduce两个抽象的编程接口，由用户去编程实现:</p>
+<ul>
+<li>Map: (k1; v1) -&gt; [(k2; v2)]</li>
+<li>Reduce: : (k2; [v2]) -&gt; [(k3; v3)]</li>
+</ul>
+<p>各个map函数对所划分的数据并行处理，从不同的输入数据产生不同的中间结果输出。<br>各个reduce也各自并行计算，各自负责处理不同的中间结果数据集合。</p>
+      
+      <a class="article-more-link" href="/2020/04/08/Large-scaleDistributedSystem01/">阅读更多...</a>
+      
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hadoop/" rel="tag">Hadoop</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MapReduce/" rel="tag">MapReduce</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag">大规模分布式系统</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+
+  
+  
+  
+
+  
+
+</article>
+    
     <article id="post-hello-world" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
@@ -226,11 +304,11 @@
     </li>
     
     <li class="nav-item">
-      <a class="nav-item-link" href="/tags/%E8%AF%BE%E7%A8%8B/">课程</a>
+      <a class="nav-item-link" href="/categories/%E8%AF%BE%E7%A8%8B/">课程</a>
     </li>
     
     <li class="nav-item">
-      <a class="nav-item-link" href="/2020/about">关于我</a>
+      <a class="nav-item-link" href="/about">关于我</a>
     </li>
     
   </ul>
