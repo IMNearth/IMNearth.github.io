@@ -37,6 +37,7 @@
 
 <h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><p>环境配置</p>
 <ul>
+<li>阿里云ECS Ubuntu 16.04</li>
 <li>java: open jdk-7</li>
 <li>hadoop: 2.9.2</li>
 <li>python: 3.5<ul>
@@ -51,6 +52,50 @@
 <h4 id="输出中文乱码问题"><a href="#输出中文乱码问题" class="headerlink" title="输出中文乱码问题"></a>输出中文乱码问题</h4><p>注意，这里由于一开始的时候没有对sample.txt文件进行转码，而且由于MRjob的输出设定，返回的字符串并不是utf-8编码的。因此需要手动进行一下解码（可能需要多次尝试）。</p>
 <figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">deal_with_output</span><span class="params">(file_path)</span>:</span></span><br><span class="line">    lines = []</span><br><span class="line">    <span class="keyword">with</span> open(file_path, <span class="string">"r"</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">            line = f.readline()</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> line: <span class="keyword">break</span></span><br><span class="line">            tmp = line.strip().split(<span class="string">"\t"</span>)</span><br><span class="line">            </span><br><span class="line">            num_bytes = int(tmp[<span class="number">0</span>])</span><br><span class="line">            name = <span class="string">""</span>.join([tmp[<span class="number">1</span>][<span class="number">1</span>:<span class="number">-1</span>]])</span><br><span class="line">            </span><br><span class="line">            print(num_bytes, name.encode(<span class="string">"iso-8859-1"</span>).decode(<span class="string">"gb18030"</span>))</span><br><span class="line">            <span class="comment"># 这里还是有bug，建议根据情况自己试一下</span></span><br></pre></td></tr></table></figure>
 ]]></content>
+      <categories>
+        <category>课程</category>
+      </categories>
+      <tags>
+        <tag>大规模分布式系统</tag>
+        <tag>Hadoop</tag>
+        <tag>MapReduce</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MapReduce编程实践2：倒排文档索引</title>
+    <url>/2020/04/08/Large-scaleDistributedSystem02/</url>
+    <content><![CDATA[<h3 id="1-具有payload的倒排文档索引"><a href="#1-具有payload的倒排文档索引" class="headerlink" title="1.具有payload的倒排文档索引"></a>1.具有payload的倒排文档索引</h3><p>Inverted Index(倒排索引)是几乎所有全文检索搜索引擎都在使用的一种数据索引技术。<br>采用倒排索引，对于给定的查询词(term)，能快速或取包含有该term的文档列表(the list of documents)。</p>
+<a id="more"></a>
+
+<p>简单的倒排文档索引示意图:</p>
+<p><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc1.png" alt="简单的倒排文档索引示意图"></p>
+<p>如果考虑单词在每个文档中出现的词频、位置、对应Web文档的URL等诸多属性，则简单的倒排算法就需要进一步的改进。我们把这些词频、位置等诸多属性称为有效负载（Payload）。</p>
+<img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc2.png" class>
+<p>一个倒排索引由大量的postings list构成，每个posting list与一个term相关联。一个posting 包含一个document id和一个payload。payload上载有term在document中出现情况相关的信息（例如：出现位置，词频等等）。</p>
+<p>前述提到，MapReduce的核心是Map和Reduce两个函数。Map用于生成会被Reduce使用的中间结果。由于MR系统是运行在分布式集群上的，所以中间结果会被Partition和Combine(可选的)。在Parition过程中，系统自动按照map的输出键进行排序，因此，进入Reduce节点的(key, {value})对将保证是按照key进行排序的，而{value}则不保证是排好序的。</p>
+<p>那如果想要对value进行排序，应该怎么办呢？</p>
+<ul>
+<li>一种办法是在Reduce任务中，对{value}表中的各个value进行排序。但当{value}列表数据量巨大、无法在本地内存中进行排序时，将出现问题。</li>
+<li>更好的办法是利用MapReduce过程中的Partition过程会对Map输出key进行排序的效应，在分发过程中就完成对value的排序。想要做到这一点，就需要将value中需要排序的部分加入到key中，使key成为复合键。 </li>
+</ul>
+<p>举例来说，本来Map任务输出的键值对是（word, (doc_titile, word_frequency)）。现在为了实现对word_frequency的排序，我们将Map的输出重置为（(word, word_frequency), doc_titile）。</p>
+<p>但这样会带来一个问题：我们仍然想要将同一个word对应的key-value pair放到同一个reduce任务下，但是现在的key是一个复合键。为此，需要实现一个新的Partitioner：从（word, word_frequency）中取出word，以word作为key进行分区。</p>
+<p>了解到这些以后，就可以进行MR倒排文档生成了。</p>
+<h3 id="2-本次任务"><a href="#2-本次任务" class="headerlink" title="2.本次任务"></a>2.本次任务</h3><ul>
+<li>倒排文档生成函数：带有payload的倒排文档索引</li>
+<li>文档查询函数：以contenttile为文本名。实现根据查询关键词，返回相关文档名（序列）</li>
+<li>提交查询返回结果的截屏</li>
+</ul>
+<p>数据样本下载地址：<a href="https://pan.baidu.com/s/1UZHOMw_uhLMBCLX9uBBAQA" target="_blank" rel="noopener">密码 : rdx8</a></p>
+<h3 id="3-代码示例"><a href="#3-代码示例" class="headerlink" title="3.代码示例"></a>3.代码示例</h3><p>环境配置</p>
+<ul>
+<li>阿里云ECS Ubuntu 16.04</li>
+<li>java: open jdk-7</li>
+<li>hadoop: 2.9.2</li>
+<li>python: 3.5</li>
+</ul>
+<h4 id="3-1-解决中文乱码问题"><a href="#3-1-解决中文乱码问题" class="headerlink" title="3.1 解决中文乱码问题"></a>3.1 解决中文乱码问题</h4><h4 id="3-2-mapper-py"><a href="#3-2-mapper-py" class="headerlink" title="3.2 mapper.py"></a>3.2 mapper.py</h4><h4 id="3-3-reducer-py"><a href="#3-3-reducer-py" class="headerlink" title="3.3 reducer.py"></a>3.3 reducer.py</h4><h4 id="3-4-run-sh"><a href="#3-4-run-sh" class="headerlink" title="3.4 run.sh"></a>3.4 run.sh</h4><h4 id="3-5-query-py"><a href="#3-5-query-py" class="headerlink" title="3.5 query.py"></a>3.5 query.py</h4><h4 id="3-5-Outcome"><a href="#3-5-Outcome" class="headerlink" title="3.5 Outcome"></a>3.5 Outcome</h4>]]></content>
       <categories>
         <category>课程</category>
       </categories>
