@@ -1,24 +1,214 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Hello World</title>
-    <url>/2020/04/07/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+    <title>高级大数据解析01：CUDA</title>
+    <url>/2020/04/09/AdvancedBigdataAnalysis01/</url>
+    <content><![CDATA[<h3 id="1-NVIDIA-GPU"><a href="#1-NVIDIA-GPU" class="headerlink" title="1 NVIDIA GPU"></a>1 NVIDIA GPU</h3><p>GPU（Graphics Processing Unit），图形处理器，又称显卡，是一种专门在个人电脑、工作站、游戏机和一些移动设备（如平板电脑、智能手机等）上做图像和图形相关运算工作的微处理器。</p>
+<p>目前全球有两大GPU生产商，分别是NVIDIA和ATI(已被AMD收购)。这里主要介绍NVIDIA GPU。</p>
 <a id="more"></a>
 
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<h4 id="1-1-影响GPU性能的因素"><a href="#1-1-影响GPU性能的因素" class="headerlink" title="1.1 影响GPU性能的因素"></a>1.1 影响GPU性能的因素</h4><ol>
+<li><strong>显存的类型</strong><br>显存一般分为两类：GDDR显存是韩庄在GPU附近的PCB板上；HBM2显存则被封装在GPU芯片内部，因而HBM2显存与GPU的通讯速率较高。</li>
+</ol>
+<p>其他的一些显存常用指标为：容量、带宽、位宽和速率。<br>位宽是指GPU一次能传递的数据宽度，位宽越大，一次性能传输的数据就越多，显卡的性能提升就越明显。<br>$$ 显存带宽(GB/s)= 显存数据频率(Gbps)\times  显存等效位宽(bit) / 8 $$</p>
+<ol start="2">
+<li><p><strong>CUDA core(SP) 数量</strong><br>SP(Streaming Processor)，流处理单元，也称为CUDA core，是GPU上最基本的处理单元。在GPU上运行的具体的指令和任务都是在SP上处理的。GPU进行并行计算，也就是很多个SP同时做处理。因此SP数目越多，GPU的性能就越强大。</p>
+</li>
+<li><p><strong>GPU之间数据传输速率</strong><br>GPU之间的互联通信有两种方案：NVLink方案和PCIe方案。使用NVLink互联的GPU通信速率一般是PCIe的近十倍。</p>
+</li>
+</ol>
+<h4 id="1-2-显卡比较：GeForce与Tesla"><a href="#1-2-显卡比较：GeForce与Tesla" class="headerlink" title="1.2 显卡比较：GeForce与Tesla"></a>1.2 显卡比较：GeForce与Tesla</h4><ol>
+<li><p><strong>ECC内存的错误检测和纠正</strong><br>GeForce系列显卡不具备错误检测和纠正的功能，但Tesla系列GPU因为GPU核心内部的寄存器、L1/L2缓存和显存都支持ECC校验功能，所以Tesla不仅能检测并纠正单比特错误也可以发现并警告双比特错误，这对保证计算结果的准确性来说非常重要.</p>
+</li>
+<li><p><strong>DAAA引擎</strong><br>GeForce产品_般只有单个DMA引擎，同时只能在一个方向上传输数据。如果数据正在上传到GPU，则在上传完成之前，无法返回由GPU计算的任何结果。同样，从GPU返回的结果将阻止任何需要上传到GPU的新数据Tesla GPU产品采用双DMA引擎，数据可以在CPU和GPU之间同时输入和输出，无需等待，效率更高.</p>
+</li>
+<li><p><strong>GPU Direct RDAAA</strong><br>NVIDIA的GPU-Direct技术可大大提高GPU之间的数据传输速度，RDMA功能则可以对多台机器之间的数据传输提供最大的性能提升。GeForce GPU只能支持单台机器内部的P2P GPU Direct,不支持跨主机的GPU-Direct RDMA。Tesla GPU 则完全支持 GPU Direct RDMA 和各种其他 GPU Direct 功能，这对GPU机器的集群部署非常有帮助。</p>
+</li>
+<li><p><strong>Hyper-Q的支持</strong><br>Hyper-Q代理允许多个CPU线程或进程在单个GPU上启动工作。GeForce GPU仅仅支 持CUDA Streams的Hyper-Q，也就是说GeForce只能从单独的CPU内核有效地接受并运行并行计算，但跨多台计算机运行的应用程序将无法有效地启动GPU上的工作。Tesla则具备完整的Hpyer-Q支持能力，更适合多个GPU集群的并行计算</p>
+</li>
+<li><p><strong>Volta架构中的 Tensor Core</strong></p>
+</li>
+</ol>
+<h3 id="2-GPU架构-–-硬件角度"><a href="#2-GPU架构-–-硬件角度" class="headerlink" title="2 GPU架构 – 硬件角度"></a>2 GPU架构 – 硬件角度</h3><h4 id="2-1-General-Idea-GPU-v-s-CPU"><a href="#2-1-General-Idea-GPU-v-s-CPU" class="headerlink" title="2.1 General Idea : GPU v.s. CPU"></a>2.1 General Idea : GPU v.s. CPU</h4><ul>
+<li>GPU与CPU结构对比：<img src="/2020/04/09/AdvancedBigdataAnalysis01/gpu_vs_cpu.jpg" alt="GPU与CPU结构对比"><table>
+<thead>
+<tr>
+<th align="center">Pros of GPU</th>
+<th></th>
+<th align="center">Cons of GPU</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">更大的内存、带宽</td>
+<td></td>
+<td align="center">不能并行化的工作帮助不大</td>
+</tr>
+<tr>
+<td align="center">更大量的执行单元</td>
+<td></td>
+<td align="center">不具有分支预测</td>
+</tr>
+<tr>
+<td align="center">对比cpu，显卡的价格较为低廉</td>
+<td></td>
+<td align="center">GPGPU模型尚不成熟</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h4 id="2-2-Hardware-View-of-GPU"><a href="#2-2-Hardware-View-of-GPU" class="headerlink" title="2.2 Hardware View of GPU"></a>2.2 Hardware View of GPU</h4><p><img src="/2020/04/09/AdvancedBigdataAnalysis01/gpu.jpg" alt="GPU硬件架构"><br>$$GPU = 显存(L1cache + L2cache) + 计算单元$$</p>
+<h4 id="2-3-厘清SP-SM"><a href="#2-3-厘清SP-SM" class="headerlink" title="2.3 厘清SP, SM"></a>2.3 厘清SP, SM</h4><p>首先要明确：SP（streaming Process），SM（streaming multiprocessor）是硬件（GPU hardware）概念。<br>而thread，block，grid，warp是软件上的（CUDA）概念。</p>
+<ul>
+<li><p>术语释义</p>
+<ul>
+<li><p><strong>SP</strong>（Streaming Processor），流处理单元，也称为CUDA core，是GPU上最基本的处理单元。在GPU上运行的具体的指令和任务都是在SP上处理的。一个SP对应一个thread。</p>
+</li>
+<li><p><strong>Warp</strong>：warp是SM调度和执行的基础概念，通常一个SM中的SP(thread)会分成几个warp(也就是SP在SM中是进行分组的，物理上进行的分组)，一般每一个WARP中有32个thread。这个WARP中的32个thread(sp)是一起工作的，执行相同的指令，如果没有这么多thread需要工作，那么这个WARP中的一些thread(sp)是不工作的。</p>
+<p>（每一个线程都有自己的寄存器内存和local memory，一个warp中的线程是同时执行的，也就是当进行并行计算时，线程数尽量为32的倍数。如果线程数不上32的倍数的话：假如是1，则warp会生成一个掩码，当一个指令控制器对一个warp单位的线程发送指令时，32个线程中只有一个线程在真正执行，其他31个 进程会进入静默状态。）</p>
+</li>
+<li><p><strong>SM</strong>（Streaming Multiprocessor）：多个SP加上其他的一些资源组成一个SM。也叫GPU大核，包括其他资源如：warp scheduler，register，shared memory等。</p>
+<p>一个SM中的所有SP是先分成warp的，共享同一个memory和instruction unit（指令单元）。<br>SM可以看做GPU的心脏（对比CPU核心），register和shared memory是SM的稀缺资源。CUDA将这些资源分配给所有驻留在SM中的threads。因此，这些有限的资源就使每个SM中active warps有非常严格的限制，也就限制了并行能力。<a href="https://blog.csdn.net/junparadox/article/details/50540602" target="_blank" rel="noopener">参考链接</a>。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2020/04/09/AdvancedBigdataAnalysis01/sm.jpg" alt></p>
+<h4 id="2-4-总结"><a href="#2-4-总结" class="headerlink" title="2.4 总结"></a>2.4 总结</h4><p>　　GPU中每个SM都设计成支持数以百计的线程并行执行，并且每个GPU都包含了很多的SM，所以GPU支持成百上千的线程并行执行。当一个kernel启动后，thread会被分配到这些SM中执行。大量的thread可能会被分配到不同的SM，<strong>同一个block中的threads必然在同一个SM中并行执行</strong>。每个thread拥有自己的程序计数器和状态寄存器，并且用该线程自己的数据执行指令，这就是所谓的单指令多线程结构(SIMT)。<br>　　一个SP可以执行一个thread，但是<strong>实际上并不是所有的thread能够在同一时刻执行</strong>。NVIDIA把32个threads组成一个warp。<strong>warp是调度和运行的基本单元。warp中所有threads并行的执行相同的指令。</strong>一个warp需要占用一个SM运行，多个warps需要轮流进入SM。由SM的硬件warp scheduler负责调度。目前每个warp包含32个threads（Nvidia保留修改数量的权利）。所以，一个GPU上resident thread最多只有 $SM \times warp$ 个。</p>
+<h3 id="3-What-is-CUDA"><a href="#3-What-is-CUDA" class="headerlink" title="3 What is CUDA"></a>3 What is CUDA</h3><p>CUDA的全名是Computed Unified Device Architecture，是一个统一的计算框架。CUDA既不是一个软件也不是一个纯硬件，是软硬结合的计算体系。它是由NVIDIA推出的通用并行计算框架，包含CUDA指令集架构和GPU内部的并行计算引擎。从CUDA体系结构的组成来说，包含了三个部分：开发库，运行环境和驱动。</p>
+<p>它诞生是为了让GPU能够有可用的编程环境，使得开发人员可以用程序控制GPU的硬件进行并行计算。</p>
+<p><strong>CUDA控制的GPU程序运行过程</strong></p>
+<ul>
+<li><p>At the top level，我们有一个主进程，该主进程在CPU上运行并执行以下步骤：</p>
+<ol>
+<li>初始化GPU卡</li>
+<li>在Host和Device上分配内存</li>
+<li>数据从Host复制到Device内存</li>
+<li>launches multiple instances of execution “kernel” on device</li>
+<li>将数据从Device内存复制到Host</li>
+<li>根据需要重复3-5</li>
+<li>释放所有内存并终止<br><img src="/2020/04/09/AdvancedBigdataAnalysis01/cuda2.jpg" alt></li>
+</ol>
+</li>
+<li><p>而在GPU上，有以下过程：(instance == block)</p>
+<ol>
+<li>execution kernel的每个instance都在SM上执行</li>
+<li>如果instance数超过了SM的数量：如果有足够的寄存器和共享内存，则每个SM一次将运行多个instance。其他SM将在队列中等待并稍后执行.</li>
+<li>一个instance中的所有线程都可以访问本地共享内存，但看不到其他instance在做什么（即使它们在同一SM上）。</li>
+<li>无法保证instance的执行顺序。</li>
+</ol>
+</li>
+</ul>
+<h3 id="4-CUDA-Cpp-编程"><a href="#4-CUDA-Cpp-编程" class="headerlink" title="4 CUDA/Cpp 编程"></a>4 CUDA/Cpp 编程</h3><h4 id="4-1-CUDA常见术语"><a href="#4-1-CUDA常见术语" class="headerlink" title="4.1 CUDA常见术语"></a>4.1 CUDA常见术语</h4><blockquote>
+<p>Compiler : NVCC<br>device = GPU<br>host = CPU<br>kernel = functions that run on the device</p>
+</blockquote>
+<h4 id="4-2-编程要点"><a href="#4-2-编程要点" class="headerlink" title="4.2 编程要点"></a>4.2 编程要点</h4><ul>
+<li><p><strong>通过关键字定义函数，控制某个程序在CPU上跑还是在GPU上跑</strong></p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th></th>
+<th align="center">Execute On</th>
+<th align="center">Callable From</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">__device__ float DeviceFunc</td>
+<td></td>
+<td align="center">device</td>
+<td align="center">device</td>
+</tr>
+<tr>
+<td align="center">__global__ void KnernelFunc</td>
+<td></td>
+<td align="center">device</td>
+<td align="center">host</td>
+</tr>
+<tr>
+<td align="center">__host__ float HostFunc</td>
+<td></td>
+<td align="center">host</td>
+<td align="center">host</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>CPU和GPU间的数据传输</strong></p>
+<ul>
+<li>GPU内存分配/回收内存的函数接口：<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">cudaError_t <span class="title">cudaMalloc</span><span class="params">(<span class="keyword">void</span> **devPtr, <span class="keyword">size_t</span>  size )</span></span>;  </span><br><span class="line"><span class="function">cudaError_t <span class="title">cudaFree</span><span class="params">(<span class="keyword">void</span> *devPtr)</span></span>;</span><br></pre></td></tr></table></figure></li>
+<li>数据传输的函数接口：<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">cudaError_t <span class="title">cudaMemcpy</span><span class="params">(<span class="keyword">void</span> *dst, <span class="keyword">const</span> <span class="keyword">void</span> *src, <span class="keyword">size_t</span> count, <span class="keyword">enum</span> cudaMemcpyKind kind)</span></span>;</span><br></pre></td></tr></table></figure>
+其中 cudaMemcpyKind 有几种类型，分别是：<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">cudaMemcpyHostToDevice; <span class="comment">// CPU到GPU</span></span><br><span class="line">cudaMemcpyDeviceToHost; <span class="comment">// GPU到CPU</span></span><br><span class="line">cudaMemcpyDeviceToDevice; <span class="comment">// GPU到GPU</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><strong>怎么用代码表示线程组织模型</strong><br>Triple angle brackets mark a call from host code to device code (also called a “kernel launch”).</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">cudaError_t kernel_routine&lt;&lt;&lt;gridDim, blockDim&gt;&gt;&gt;(args);</span><br><span class="line"><span class="comment">// 函数名称&lt;&lt;&lt;block数目，thread数目，shared memory大小&gt;&gt;&gt;(参数...);</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>gridDim</strong> is the number of instances of the kernel (the “grid” size), i.e., number of blocks</li>
+<li><strong>blockDim</strong> is the number of threads within each instance (the “block” size) , i.e. , number of threads.</li>
+<li>The more general form <strong>allows gridDim and blockDim to be 2D or 3D</strong> to simplify application programs</li>
+</ul>
+</li>
+<li><p><strong>数据在GPU内存的存放</strong><br>当kernel想要取用某一块内存的数据时，需要计算数据所在的位置：<img src="/2020/04/09/AdvancedBigdataAnalysis01/index.jpg" alt></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> index = threadIdx.x + blockIdx.x * blockDim.x;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>一个问题：当数据并不正好是blockDim.x的倍数的时候，该怎么办？</li>
+<li>Ans: 在kernelFunc中多传一个参数，避免溢出<br><img src="/2020/04/09/AdvancedBigdataAnalysis01/avoid.jpg" alt><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 同时需要更新KernelFunc</span></span><br><span class="line">kernel_routine&lt;&lt;&lt; (N+M<span class="number">-1</span>)/M, M&gt;&gt;&gt;(da, db, dc, N);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><strong>Sample Code</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// include files</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;math.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"helper_cuda.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// random init</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">random_inits</span><span class="params">(<span class="keyword">int</span> *a, <span class="keyword">int</span> N)</span></span>&#123;</span><br><span class="line">  srand(<span class="number">2019</span>);</span><br><span class="line">  <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;N; i++)&#123;</span><br><span class="line">    a[i] = rand()%<span class="number">100</span> + <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//kernel routine</span></span><br><span class="line"><span class="function">__global__ <span class="keyword">void</span> <span class="title">add_two_vec</span><span class="params">(<span class="keyword">int</span> *a, <span class="keyword">int</span> *b, <span class="keyword">int</span> *c, <span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">int</span> tid = threadIdx.x + blockDim.x*blockIdx.x;</span><br><span class="line">  <span class="keyword">if</span> (tid &lt; n) c[tid] = a[tid] + b[tid];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// main code</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">const</span> <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">int</span> *a, *b, *c;</span><br><span class="line">  <span class="keyword">int</span> *da, *db, *dc;</span><br><span class="line">  <span class="keyword">int</span> nblocks, nthreads, nsize; </span><br><span class="line"></span><br><span class="line">  <span class="comment">// initialise card</span></span><br><span class="line">  findCudaDevice(argc, argv);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// set number of blocks, and threads per block</span></span><br><span class="line">  nblocks  = <span class="number">2</span>;</span><br><span class="line">  nthreads = <span class="number">8</span>;</span><br><span class="line">  nsize    = nblocks*nthreads ;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// init vector in host device</span></span><br><span class="line">  a = (<span class="keyword">int</span> *)<span class="built_in">malloc</span>(nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>)); random_inits(a, nsize);</span><br><span class="line">  b = (<span class="keyword">int</span> *)<span class="built_in">malloc</span>(nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>)); random_inits(b, nsize);</span><br><span class="line">  c = (<span class="keyword">int</span> *)<span class="built_in">malloc</span>(nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// allocate memory for array</span></span><br><span class="line">  checkCudaErrors(cudaMallocManaged(&amp;da, nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>)));</span><br><span class="line">  checkCudaErrors(cudaMallocManaged(&amp;db, nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>)));</span><br><span class="line">  checkCudaErrors(cudaMallocManaged(&amp;dc, nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>)));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// copy data from host to device</span></span><br><span class="line">  checkCudaErrors(cudaMemcpy(da, a, nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>), cudaMemcpyHostToDevice));</span><br><span class="line">  checkCudaErrors(cudaMemcpy(db, b, nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>), cudaMemcpyHostToDevice));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// execute kernel</span></span><br><span class="line">  add_two_vec&lt;&lt;&lt;nblocks,nthreads&gt;&gt;&gt;(da, db, dc, nsize);</span><br><span class="line">  getLastCudaError(<span class="string">"add_teo_vec failed\n"</span>);</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Get back to Host</span></span><br><span class="line">  checkCudaErrors(cudaMemcpy(c, dc, nsize*<span class="keyword">sizeof</span>(<span class="keyword">int</span>), cudaMemcpyDeviceToHost));</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Print</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;nsize; i++)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">" a,  b, c  =  %d  %d  %d \n"</span>, a[i], b[i], c[i]);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Clean up</span></span><br><span class="line">  checkCudaErrors(cudaFree(da));</span><br><span class="line">  checkCudaErrors(cudaFree(db));</span><br><span class="line">  checkCudaErrors(cudaFree(dc));</span><br><span class="line">  <span class="built_in">free</span>(a); <span class="built_in">free</span>(b); <span class="built_in">free</span>(c);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="4-3-Others"><a href="#4-3-Others" class="headerlink" title="4.3 Others"></a>4.3 Others</h4><ul>
+<li><p><strong>Coordinating Host &amp; Device</strong></p>
+<ul>
+<li>Kernel launches are asynchronous</li>
+<li>CPU needs to synchronize before consuming the results<ul>
+<li><strong>cudaMemcpy()</strong>  Blocks the CPU until the copy is complete. Copy begins when all preceding CUDA calls have completed</li>
+<li><strong>cudaMemcpyAsync()</strong>   Asynchronous, does not block the CPU.</li>
+<li><strong>cudaDeviceSynchronize()</strong>   Blocks the CPU until all preceding CUDA calls have completed</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Reporting Errors</strong><br>All CUDA API calls return an error code (<strong>cudaError_t</strong>). It is : Error in the API call itself <strong>OR</strong> Error in an earlier asynchronous operation (e.g. kernel).<br>To get the error code for the last error:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">cudaError_t <span class="title">cudaGetLastError</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>To get a string to describe the error:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">cudaGetErrorString</span><span class="params">(cudaError_t)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// for example</span></span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%s\n"</span>, cudaGetErrorString(cudaGetLastError()));</span><br></pre></td></tr></table></figure></li>
+<li><p><strong>Device Management</strong><br>Application can query and select GPUs</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">cudaError_t <span class="title">cudaGetDeviceCount</span><span class="params">(<span class="keyword">int</span> *count)</span></span>;</span><br><span class="line"><span class="function">cudaError_t <span class="title">cudaSetDevice</span><span class="params">(<span class="keyword">int</span> device)</span></span>;</span><br><span class="line"><span class="function">cudaError_t <span class="title">cudaGetDevice</span><span class="params">(<span class="keyword">int</span> *device)</span></span>;</span><br><span class="line"><span class="function">cudaError_t <span class="title">cudaGetDeviceProperties</span><span class="params">(cudaDeviceProp *prop, <span class="keyword">int</span> device)</span></span></span><br></pre></td></tr></table></figure>
+<p>Multiple threads can sharea device.</p>
+<p>A single thread can manage multiple devices.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">cudaError_t <span class="title">cudaSetDevice</span><span class="params">(i)</span></span>; <span class="comment">//to select current device</span></span><br><span class="line"><span class="function">cudaError_t <span class="title">cudaMemcpy</span><span class="params">(...)</span></span>; <span class="comment">//for peer-to-peer copies</span></span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="5-CUDA内存模型-–-软件角度"><a href="#5-CUDA内存模型-–-软件角度" class="headerlink" title="5 CUDA内存模型 – 软件角度"></a>5 CUDA内存模型 – 软件角度</h3><p><img src="/2020/04/09/AdvancedBigdataAnalysis01/cuda.jpg" alt></p>
+<ul>
+<li><strong>thread</strong>：一个CUDA的并行程序会被以许多个threads来执行。每个 thread 都有自己的一份 register 和 local memory 的空间。</li>
+<li><strong>block</strong>：一组 thread 构成一个 block，这些 thread 共享一份 shared memory。</li>
+<li><strong>grid</strong>：多个blocks会构成一个grid。不同的 grid 有各自的 global memory、constant memory 和 texture memory。<strong>同一个grid内所有的thread(包括不同block的thread)都可以共享这些global memory、constant memory、和 texture memory。</strong></li>
+</ul>
+<p>线程访问这几类存储器的速度是：register &gt; local memory &gt;shared memory &gt; global memory。</p>
+<p>每一个时钟周期内，warp（一个block里面一起运行的thread）包含的thread数量是有限的，现在的规定是32个。其中各个线程对应的数据资源不同(指令相同但是数据不同）。一个block中含有16个warp。所以一个block中最多含有512个线程。</p>
+<h3 id="6-内存共享与同步-an-example"><a href="#6-内存共享与同步-an-example" class="headerlink" title="6 内存共享与同步: an example"></a>6 内存共享与同步: an example</h3><p><strong>__shared__</strong> declares data that is available for all threads within a certain block. (not visible to threads in other blocks)</p>
+<p>Use <strong>__syncthreads()</strong> as a barrier to prevent data hazard.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">__global__ <span class="keyword">void</span> <span class="title">stencil_1d</span><span class="params">(<span class="keyword">int</span> *in, <span class="keyword">int</span> *out)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// declare a shared array, availabel for all threads in this block</span></span><br><span class="line">    __shared__ <span class="keyword">int</span> temp[BLOCK_SIZE + <span class="number">2</span> * RADIUS];</span><br><span class="line">    <span class="keyword">int</span> gindex = threadIdx.x + blockIdx.x * blockDim.x;</span><br><span class="line">    <span class="keyword">int</span> lindex = threadIdx.x + radius;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Read input elements into shared memory</span></span><br><span class="line">    temp[lindex] = in[gindex]; </span><br><span class="line">    <span class="keyword">if</span> (threadIdx.x &lt; RADIUS) &#123;</span><br><span class="line">        temp[lindex – RADIUS] = in[gindex – RADIUS];</span><br><span class="line">        temp[lindex + BLOCK_SIZE] = in[gindex + BLOCK_SIZE]; </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Because we have no idea which thread runs first, we need to</span></span><br><span class="line">    <span class="comment">// Synchronize (ensure all the data is available)</span></span><br><span class="line">    __syncthreads( );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Apply the stencil (i.e. 1-D conv)</span></span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> offset = -RADIUS ; offset &lt;= RADIUS ; offset++)</span><br><span class="line">        result += temp[lindex + offset];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Store the result</span></span><br><span class="line">    out[gindex] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+
+
 ]]></content>
+      <categories>
+        <category>课程</category>
+      </categories>
+      <tags>
+        <tag>CUDA</tag>
+        <tag>GPU</tag>
+        <tag>Cpp</tag>
+      </tags>
   </entry>
   <entry>
     <title>MapReduce编程实践1</title>
@@ -80,6 +270,26 @@
         <tag>MapReduce</tag>
         <tag>Python</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2020/04/07/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<a id="more"></a>
+
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+]]></content>
   </entry>
   <entry>
     <title>MapReduce编程实践2：倒排文档索引</title>
