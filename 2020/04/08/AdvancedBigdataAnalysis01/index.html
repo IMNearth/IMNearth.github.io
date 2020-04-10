@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    MapReduce编程实践2：倒排文档索引 |  IMNeatrh
+    高级大数据解析01：CUDA编程 |  IMNeatrh
   </title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   
@@ -36,7 +36,7 @@
   <div id="app">
     <main class="content on">
       <section class="outer">
-  <article id="post-Large-scaleDistributedSystem02" class="article article-type-post" itemscope
+  <article id="post-AdvancedBigdataAnalysis01" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
   <div class="article-inner">
@@ -44,7 +44,7 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  MapReduce编程实践2：倒排文档索引
+  高级大数据解析01：CUDA编程
 </h1>
  
 
@@ -53,8 +53,8 @@
 
     
     <div class="article-meta">
-      <a href="/2020/04/08/Large-scaleDistributedSystem02/" class="article-date">
-  <time datetime="2020-04-07T18:27:40.000Z" itemprop="datePublished">2020-04-08</time>
+      <a href="/2020/04/08/AdvancedBigdataAnalysis01/" class="article-date">
+  <time datetime="2020-04-08T09:01:58.000Z" itemprop="datePublished">2020-04-08</time>
 </a>
       
   <div class="article-category">
@@ -68,7 +68,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> Word count:</span>
-            <span class="post-count">962</span>
+            <span class="post-count">154</span>
         </span>
     </span>
 
@@ -77,7 +77,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> Reading time≈</span>
-            <span class="post-count">3 min</span>
+            <span class="post-count">1 min</span>
         </span>
     </span>
 </div>
@@ -102,41 +102,10 @@
       
 
       
-      <h3 id="1-具有payload的倒排文档索引"><a href="#1-具有payload的倒排文档索引" class="headerlink" title="1.具有payload的倒排文档索引"></a>1.具有payload的倒排文档索引</h3><p>Inverted Index(倒排索引)是几乎所有全文检索搜索引擎都在使用的一种数据索引技术。<br>采用倒排索引，对于给定的查询词(term)，能快速或取包含有该term的文档列表(the list of documents)。</p>
-<a id="more"></a>
+      <h3 id="Practice01"><a href="#Practice01" class="headerlink" title="Practice01"></a>Practice01</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;math.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// kernel routine// </span></span><br><span class="line"><span class="function">__global__ <span class="keyword">void</span> <span class="title">my_first_kernel</span><span class="params">(<span class="keyword">float</span> *x)</span></span>&#123;</span><br><span class="line">  <span class="keyword">int</span> tid = threadIdx.x + blockDim.x*blockIdx.x;</span><br><span class="line">  x[tid] = (<span class="keyword">float</span>) threadIdx.x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// main code //</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span>&#123;</span><br><span class="line">  <span class="keyword">float</span> *h_x, *d_x;</span><br><span class="line">  <span class="keyword">int</span>   nblocks, nthreads, nsize, n; </span><br><span class="line">  </span><br><span class="line">  <span class="comment">// set number of blocks, and threads per block</span></span><br><span class="line">  nblocks  = <span class="number">2</span>;</span><br><span class="line">  nthreads = <span class="number">8</span>;</span><br><span class="line">  nsize    = nblocks*nthreads ;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// allocate memory for array</span></span><br><span class="line">  h_x = (<span class="keyword">float</span> *)<span class="built_in">malloc</span>(nsize*<span class="keyword">sizeof</span>(<span class="keyword">float</span>));</span><br><span class="line">  cudaMalloc((<span class="keyword">void</span> **)&amp;d_x, nsize*<span class="keyword">sizeof</span>(<span class="keyword">float</span>));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// execute kernel</span></span><br><span class="line">  my_first_kernel&lt;&lt;&lt;nblocks,nthreads&gt;&gt;&gt;(d_x);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// copy back results and print them out</span></span><br><span class="line">  cudaMemcpy(h_x,d_x,nsize*<span class="keyword">sizeof</span>(<span class="keyword">float</span>),cudaMemcpyDeviceToHost);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (n=<span class="number">0</span>; n&lt;nsize; n++) <span class="built_in">printf</span>(<span class="string">" n,  x  =  %d  %f \n"</span>,n,h_x[n]);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// free memory </span></span><br><span class="line">  cudaFree(d_x);</span><br><span class="line">  <span class="built_in">free</span>(h_x);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// CUDA exit -- needed to flush printf write buffer</span></span><br><span class="line">  cudaDeviceReset();</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>简单的倒排文档索引示意图:</p>
-<p><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc1.png" alt="简单的倒排文档索引示意图"></p>
-<p>如果考虑单词在每个文档中出现的词频、位置、对应Web文档的URL等诸多属性，则简单的倒排算法就需要进一步的改进。我们把这些词频、位置等诸多属性称为有效负载（Payload）。</p>
-<img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc2.png" class>
-<p>一个倒排索引由大量的postings list构成，每个posting list与一个term相关联。一个posting 包含一个document id和一个payload。payload上载有term在document中出现情况相关的信息（例如：出现位置，词频等等）。</p>
-<p>前述提到，MapReduce的核心是Map和Reduce两个函数。Map用于生成会被Reduce使用的中间结果。由于MR系统是运行在分布式集群上的，所以中间结果会被Partition和Combine(可选的)。在Parition过程中，系统自动按照map的输出键进行排序，因此，进入Reduce节点的(key, {value})对将保证是按照key进行排序的，而{value}则不保证是排好序的。</p>
-<p>那如果想要对value进行排序，应该怎么办呢？</p>
-<ul>
-<li>一种办法是在Reduce任务中，对{value}表中的各个value进行排序。但当{value}列表数据量巨大、无法在本地内存中进行排序时，将出现问题。</li>
-<li>更好的办法是利用MapReduce过程中的Partition过程会对Map输出key进行排序的效应，在分发过程中就完成对value的排序。想要做到这一点，就需要将value中需要排序的部分加入到key中，使key成为复合键。 </li>
-</ul>
-<p>举例来说，本来Map任务输出的键值对是（word, (doc_titile, word_frequency)）。现在为了实现对word_frequency的排序，我们将Map的输出重置为（(word, word_frequency), doc_titile）。</p>
-<p>但这样会带来一个问题：我们仍然想要将同一个word对应的key-value pair放到同一个reduce任务下，但是现在的key是一个复合键。为此，需要实现一个新的Partitioner：从（word, word_frequency）中取出word，以word作为key进行分区。</p>
-<p>了解到这些以后，就可以进行MR倒排文档生成了。</p>
-<h3 id="2-本次任务"><a href="#2-本次任务" class="headerlink" title="2.本次任务"></a>2.本次任务</h3><ul>
-<li>倒排文档生成函数：带有payload的倒排文档索引</li>
-<li>文档查询函数：以contenttile为文本名。实现根据查询关键词，返回相关文档名（序列）</li>
-<li>提交查询返回结果的截屏</li>
-</ul>
-<p>数据样本下载地址：<a href="https://pan.baidu.com/s/1UZHOMw_uhLMBCLX9uBBAQA" target="_blank" rel="noopener">密码 : rdx8</a></p>
-<h3 id="3-代码示例"><a href="#3-代码示例" class="headerlink" title="3.代码示例"></a>3.代码示例</h3><p>环境配置</p>
-<ul>
-<li>阿里云ECS Ubuntu 16.04</li>
-<li>java: open jdk-7</li>
-<li>hadoop: 2.9.2</li>
-<li>python: 3.5</li>
-</ul>
-<h4 id="3-1-解决中文乱码问题"><a href="#3-1-解决中文乱码问题" class="headerlink" title="3.1 解决中文乱码问题"></a>3.1 解决中文乱码问题</h4><p>由于下载的文件不是utf-8编码，而是gbk编码的。为了后续编程方便和一致性，建议将文件先转码为utf-8编码。具体操作是：首先在MacOS文本编辑器的偏好设置里，将文件的打开编码设置为gbk，保存编码设置为utf-8，然后打开下载的文件，另存为…即可。然后要记得把文本编辑器的偏好设置改回来（即打开/关闭编码都最好是utf-8）。</p>
-<p>然后，将下载的文件scp到已经配好环境的ECS服务器上。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scp local_file_path username@server:host_file_path</span><br></pre></td></tr></table></figure>
-<p>这里建议不管是不是使用云服务器，都检查一下当前使用终端的字符集是否支持中文。如果不支持，在服务器上还是会出现中文乱码问题，可以参照这个链接<a href="https://blog.csdn.net/weixin_34236497/article/details/94046218" target="_blank" rel="noopener">ubuntu16.04解决文件中文乱码问题</a>。</p>
-<h4 id="3-2-mapper-py"><a href="#3-2-mapper-py" class="headerlink" title="3.2 mapper.py"></a>3.2 mapper.py</h4><h4 id="3-3-reducer-py"><a href="#3-3-reducer-py" class="headerlink" title="3.3 reducer.py"></a>3.3 reducer.py</h4><h4 id="3-4-run-sh"><a href="#3-4-run-sh" class="headerlink" title="3.4 run.sh"></a>3.4 run.sh</h4><h4 id="3-5-query-py"><a href="#3-5-query-py" class="headerlink" title="3.5 query.py"></a>3.5 query.py</h4><h4 id="3-5-Outcome"><a href="#3-5-Outcome" class="headerlink" title="3.5 Outcome"></a>3.5 Outcome</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ./prac1</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
+
       
       <!-- reward -->
       
@@ -200,14 +169,14 @@
     <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2020/04/08/Large-scaleDistributedSystem02/" alt="微信分享二维码">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2020/04/08/AdvancedBigdataAnalysis01/" alt="微信分享二维码">
     </div>
 </div>
 
 <div id="share-mask"></div>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hadoop/" rel="tag">Hadoop</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MapReduce/" rel="tag">MapReduce</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag">大规模分布式系统</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CUDA/" rel="tag">CUDA</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NVIDIA/" rel="tag">NVIDIA</a></li></ul>
 
 
     </footer>
@@ -218,19 +187,10 @@
   
   <nav class="article-nav">
     
-      <a href="/2020/04/08/AdvancedBigdataAnalysis01/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            高级大数据解析01：CUDA编程
-          
-        </div>
-      </a>
     
-    
-      <a href="/2020/04/08/Large-scaleDistributedSystem01/" class="article-nav-link">
+      <a href="/2020/04/08/Large-scaleDistributedSystem02/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">MapReduce编程实践1</div>
+        <div class="article-nav-title">MapReduce编程实践2：倒排文档索引</div>
       </a>
     
   </nav>
