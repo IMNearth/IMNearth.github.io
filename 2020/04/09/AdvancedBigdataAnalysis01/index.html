@@ -197,10 +197,18 @@
 </ol>
 </li>
 </ul>
-<h3 id="4-CUDA-Cpp-编程"><a href="#4-CUDA-Cpp-编程" class="headerlink" title="4 CUDA/Cpp 编程"></a>4 CUDA/Cpp 编程</h3><h4 id="4-1-CUDA常见术语"><a href="#4-1-CUDA常见术语" class="headerlink" title="4.1 CUDA常见术语"></a>4.1 CUDA常见术语</h4><blockquote>
+<h3 id="4-CUDA内存模型-–-软件角度"><a href="#4-CUDA内存模型-–-软件角度" class="headerlink" title="4 CUDA内存模型 – 软件角度"></a>4 CUDA内存模型 – 软件角度</h3><p><img src="/2020/04/09/AdvancedBigdataAnalysis01/cuda.jpg" alt></p>
+<ul>
+<li><strong>thread</strong>：一个CUDA的并行程序会被以许多个threads来执行。每个 thread 都有自己的一份 register 和 local memory 的空间。</li>
+<li><strong>block</strong>：一组 thread 构成一个 block，这些 thread 共享一份 shared memory。</li>
+<li><strong>grid</strong>：多个blocks会构成一个grid。不同的 grid 有各自的 global memory、constant memory 和 texture memory。<strong>同一个grid内所有的thread(包括不同block的thread)都可以共享这些global memory、constant memory、和 texture memory。</strong></li>
+</ul>
+<p>线程访问这几类存储器的速度是：register &gt; local memory &gt;shared memory &gt; global memory。</p>
+<p>每一个时钟周期内，warp（一个block里面一起运行的thread）包含的thread数量是有限的，现在的规定是32个。其中各个线程对应的数据资源不同(指令相同但是数据不同）。一个block中含有16个warp。所以一个block中最多含有512个线程。</p>
+<h3 id="5-CUDA-Cpp-编程"><a href="#5-CUDA-Cpp-编程" class="headerlink" title="5 CUDA/Cpp 编程"></a>5 CUDA/Cpp 编程</h3><h4 id="5-1-CUDA常见术语"><a href="#5-1-CUDA常见术语" class="headerlink" title="5.1 CUDA常见术语"></a>5.1 CUDA常见术语</h4><blockquote>
 <p>Compiler : NVCC<br>device = GPU<br>host = CPU<br>kernel = functions that run on the device</p>
 </blockquote>
-<h4 id="4-2-编程要点"><a href="#4-2-编程要点" class="headerlink" title="4.2 编程要点"></a>4.2 编程要点</h4><ul>
+<h4 id="5-2-编程要点"><a href="#5-2-编程要点" class="headerlink" title="5.2 编程要点"></a>5.2 编程要点</h4><ul>
 <li><p><strong>通过关键字定义函数，控制某个程序在CPU上跑还是在GPU上跑</strong></p>
 <table>
 <thead>
@@ -260,7 +268,7 @@
 
 </li>
 </ul>
-<h4 id="4-3-Others"><a href="#4-3-Others" class="headerlink" title="4.3 Others"></a>4.3 Others</h4><ul>
+<h4 id="5-3-Others"><a href="#5-3-Others" class="headerlink" title="5.3 Others"></a>5.3 Others</h4><ul>
 <li><p><strong>Coordinating Host &amp; Device</strong></p>
 <ul>
 <li>Kernel launches are asynchronous</li>
@@ -285,14 +293,6 @@
 
 </li>
 </ul>
-<h3 id="5-CUDA内存模型-–-软件角度"><a href="#5-CUDA内存模型-–-软件角度" class="headerlink" title="5 CUDA内存模型 – 软件角度"></a>5 CUDA内存模型 – 软件角度</h3><p><img src="/2020/04/09/AdvancedBigdataAnalysis01/cuda.jpg" alt></p>
-<ul>
-<li><strong>thread</strong>：一个CUDA的并行程序会被以许多个threads来执行。每个 thread 都有自己的一份 register 和 local memory 的空间。</li>
-<li><strong>block</strong>：一组 thread 构成一个 block，这些 thread 共享一份 shared memory。</li>
-<li><strong>grid</strong>：多个blocks会构成一个grid。不同的 grid 有各自的 global memory、constant memory 和 texture memory。<strong>同一个grid内所有的thread(包括不同block的thread)都可以共享这些global memory、constant memory、和 texture memory。</strong></li>
-</ul>
-<p>线程访问这几类存储器的速度是：register &gt; local memory &gt;shared memory &gt; global memory。</p>
-<p>每一个时钟周期内，warp（一个block里面一起运行的thread）包含的thread数量是有限的，现在的规定是32个。其中各个线程对应的数据资源不同(指令相同但是数据不同）。一个block中含有16个warp。所以一个block中最多含有512个线程。</p>
 <h3 id="6-内存共享与同步-an-example"><a href="#6-内存共享与同步-an-example" class="headerlink" title="6 内存共享与同步: an example"></a>6 内存共享与同步: an example</h3><p><strong>__shared__</strong> declares data that is available for all threads within a certain block. (not visible to threads in other blocks)</p>
 <p>Use <strong>__syncthreads()</strong> as a barrier to prevent data hazard.</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">__global__ <span class="keyword">void</span> <span class="title">stencil_1d</span><span class="params">(<span class="keyword">int</span> *in, <span class="keyword">int</span> *out)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// declare a shared array, availabel for all threads in this block</span></span><br><span class="line">    __shared__ <span class="keyword">int</span> temp[BLOCK_SIZE + <span class="number">2</span> * RADIUS];</span><br><span class="line">    <span class="keyword">int</span> gindex = threadIdx.x + blockIdx.x * blockDim.x;</span><br><span class="line">    <span class="keyword">int</span> lindex = threadIdx.x + radius;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Read input elements into shared memory</span></span><br><span class="line">    temp[lindex] = in[gindex]; </span><br><span class="line">    <span class="keyword">if</span> (threadIdx.x &lt; RADIUS) &#123;</span><br><span class="line">        temp[lindex – RADIUS] = in[gindex – RADIUS];</span><br><span class="line">        temp[lindex + BLOCK_SIZE] = in[gindex + BLOCK_SIZE]; </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Because we have no idea which thread runs first, we need to</span></span><br><span class="line">    <span class="comment">// Synchronize (ensure all the data is available)</span></span><br><span class="line">    __syncthreads( );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Apply the stencil (i.e. 1-D conv)</span></span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> offset = -RADIUS ; offset &lt;= RADIUS ; offset++)</span><br><span class="line">        result += temp[lindex + offset];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Store the result</span></span><br><span class="line">    out[gindex] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
