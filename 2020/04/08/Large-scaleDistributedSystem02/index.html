@@ -107,9 +107,7 @@
 
 <p>简单的倒排文档索引示意图:</p>
 <p><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc1.png" alt="简单的倒排文档索引示意图"></p>
-<p>如果考虑单词在每个文档中出现的词频、位置、对应Web文档的URL等诸多属性，则简单的倒排算法就需要进一步的改进。我们把这些词频、位置等诸多属性称为有效负载（Payload）。</p>
-<img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc2.png" class>
-<p>一个倒排索引由大量的postings list构成，每个posting list与一个term相关联。一个posting 包含一个document id和一个payload。payload上载有term在document中出现情况相关的信息（例如：出现位置，词频等等）。</p>
+<p>如果考虑单词在每个文档中出现的词频、位置、对应Web文档的URL等诸多属性，则简单的倒排算法就需要进一步的改进。我们把这些词频、位置等诸多属性称为有效负载（Payload）。<br><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc2.png" alt><br>一个倒排索引由大量的postings list构成，每个posting list与一个term相关联。一个posting 包含一个document id和一个payload。payload上载有term在document中出现情况相关的信息（例如：出现位置，词频等等）。</p>
 <p>前述提到，MapReduce的核心是Map和Reduce两个函数。Map用于生成会被Reduce使用的中间结果。由于MR系统是运行在分布式集群上的，所以中间结果会被Partition和Combine(可选的)。在Parition过程中，系统自动按照map的输出键进行排序，因此，进入Reduce节点的(key, {value})对将保证是按照key进行排序的，而{value}则不保证是排好序的。</p>
 <p>那如果想要对value进行排序，应该怎么办呢？</p>
 <ul>

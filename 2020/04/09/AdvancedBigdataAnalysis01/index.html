@@ -293,7 +293,7 @@
 
 </li>
 </ul>
-<h3 id="6-内存共享与同步-an-example"><a href="#6-内存共享与同步-an-example" class="headerlink" title="6 内存共享与同步: an example"></a>6 内存共享与同步: an example</h3><p><strong>__shared__</strong> declares data that is available for all threads within a certain block. (not visible to threads in other blocks)</p>
+<h3 id="6-内存共享与同步-an-example"><a href="#6-内存共享与同步-an-example" class="headerlink" title="6 内存共享与同步: an example"></a>6 内存共享与同步: an example</h3><p><strong>__shared__</strong> declares data that is available for <strong>all threads within a certain block</strong>. (not visible to threads in other blocks)</p>
 <p>Use <strong>__syncthreads()</strong> as a barrier to prevent data hazard.</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">__global__ <span class="keyword">void</span> <span class="title">stencil_1d</span><span class="params">(<span class="keyword">int</span> *in, <span class="keyword">int</span> *out)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// declare a shared array, availabel for all threads in this block</span></span><br><span class="line">    __shared__ <span class="keyword">int</span> temp[BLOCK_SIZE + <span class="number">2</span> * RADIUS];</span><br><span class="line">    <span class="keyword">int</span> gindex = threadIdx.x + blockIdx.x * blockDim.x;</span><br><span class="line">    <span class="keyword">int</span> lindex = threadIdx.x + radius;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Read input elements into shared memory</span></span><br><span class="line">    temp[lindex] = in[gindex]; </span><br><span class="line">    <span class="keyword">if</span> (threadIdx.x &lt; RADIUS) &#123;</span><br><span class="line">        temp[lindex – RADIUS] = in[gindex – RADIUS];</span><br><span class="line">        temp[lindex + BLOCK_SIZE] = in[gindex + BLOCK_SIZE]; </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Because we have no idea which thread runs first, we need to</span></span><br><span class="line">    <span class="comment">// Synchronize (ensure all the data is available)</span></span><br><span class="line">    __syncthreads( );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Apply the stencil (i.e. 1-D conv)</span></span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> offset = -RADIUS ; offset &lt;= RADIUS ; offset++)</span><br><span class="line">        result += temp[lindex + offset];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Store the result</span></span><br><span class="line">    out[gindex] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -380,6 +380,15 @@
   
   
   <nav class="article-nav">
+    
+      <a href="/2020/06/21/AdvFin-Final/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            金融大数据挖掘期末报告
+          
+        </div>
+      </a>
     
     
       <a href="/2020/04/08/Large-scaleDistributedSystem02/" class="article-nav-link">

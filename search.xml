@@ -1,72 +1,404 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>MapReduce编程实践2：倒排文档索引</title>
-    <url>/2020/04/08/Large-scaleDistributedSystem02/</url>
-    <content><![CDATA[<h3 id="1-具有payload的倒排文档索引"><a href="#1-具有payload的倒排文档索引" class="headerlink" title="1.具有payload的倒排文档索引"></a>1.具有payload的倒排文档索引</h3><p>Inverted Index(倒排索引)是几乎所有全文检索搜索引擎都在使用的一种数据索引技术。<br>采用倒排索引，对于给定的查询词(term)，能快速或取包含有该term的文档列表(the list of documents)。</p>
+    <title>金融大数据挖掘期末报告</title>
+    <url>/2020/06/21/AdvFin-Final/</url>
+    <content><![CDATA[<h3 id="基于手机基站信息的城市空间特征研究"><a href="#基于手机基站信息的城市空间特征研究" class="headerlink" title="基于手机基站信息的城市空间特征研究"></a>基于手机基站信息的城市空间特征研究</h3><p>作者: 张霁雯  16307110435    </p>
+<h4 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h4><p>本文基于上海基站数据，通过巧妙的设计深入挖掘用户与基站之间的关联。一方面，以用户为基础构建了基站交互图，通过严谨合理的聚类揭示了上海市各区域内的人口流动。另一方面，综合人口流动和基站附近基础设施的统计，得到了上海各区域之间的经济发展现状，并对相关因素进行了分析。结合上述两者与其他信息得到了合理的城市功能区划分，效果十分出色。</p>
 <a id="more"></a>
 
-<p>简单的倒排文档索引示意图:</p>
-<p><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc1.png" alt="简单的倒排文档索引示意图"></p>
-<p>如果考虑单词在每个文档中出现的词频、位置、对应Web文档的URL等诸多属性，则简单的倒排算法就需要进一步的改进。我们把这些词频、位置等诸多属性称为有效负载（Payload）。</p>
-<img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc2.png" class>
-<p>一个倒排索引由大量的postings list构成，每个posting list与一个term相关联。一个posting 包含一个document id和一个payload。payload上载有term在document中出现情况相关的信息（例如：出现位置，词频等等）。</p>
-<p>前述提到，MapReduce的核心是Map和Reduce两个函数。Map用于生成会被Reduce使用的中间结果。由于MR系统是运行在分布式集群上的，所以中间结果会被Partition和Combine(可选的)。在Parition过程中，系统自动按照map的输出键进行排序，因此，进入Reduce节点的(key, {value})对将保证是按照key进行排序的，而{value}则不保证是排好序的。</p>
-<p>那如果想要对value进行排序，应该怎么办呢？</p>
+
+
+
+<h4 id="一、项目背景"><a href="#一、项目背景" class="headerlink" title="一、项目背景"></a>一、项目背景</h4><p>​        随着移动通信网络的不断发展，新的信息化时代即将来临。据我国工业和信息化部数据显示，2019年中国建成了13万个5G基站，预计到2020年底，5G基站将超过60万个，覆盖全国所有地级以上城市。</p>
+<p>​        基站的广阔覆盖与移动通讯设备的增多使得人机交互产生了海量的数据，这为研究城市人口空间分布和城市经济学提供了一个崭新的角度。基站是不动点，而人的活动都是有规律可循的。研究<sup>[1]</sup>表明，70%的人口只经常访问两三个地方；大部分人口停留最久的场所是住宅与工作地点。因此基站所记录的用户数据能够反映一定时空内的用户的行为规律。例如，通过对手机定位数据的分析可以获取特定用户的活动轨迹，进行行为追溯等。该项技术在本次新冠疫情期间就发挥了巨大的作用。</p>
+<p>​        基站是城市空间的一部分。用户访问基站附近的建筑与基站产生的交互数据，不仅反映了用户自身行为规律与偏好，也侧面刻画了基站所处区域具备的城市角色与功能。例如，在市政规划中，通过对特定地点附近的基站流量分析，可以帮助调整交通政策以及基础设施的建设，使得城市的居民能获得更好的出行体验。这提示我们可以根据海量的用户数据反推基站附近地理空间的功效性，为后续城市功能区划分提供了指引。</p>
+<p>​        为了更好的进行基站数据挖掘，我们需要了解基站是如何记录用户数据的。当用户开启手机，手机就会向最近的基站发出登录网络的信号，与基站建立联系。移动通信网络的信号覆盖逻辑上被设计成由若干个六边形的基站小区相互邻接而构成的蜂窝网络面状服务区，手机终端总是与其中某一个基站小区保持联系，当用户从一个区域过渡到另一区域时，手机自动进行切换。移动通信网络的控制中心会定期或者不定期地主动或被动地记录每个手机终端时间序列的基站小区编号信息，由此可以得到用户被不同基站记录的频次以及用户的位置移动情况。在本项目中，距离用户最近的基站每隔两小时会进行一次地理位置信息记录；如果用户在不同的基站覆盖区域内移动，则立即记录。由于不同个体的分布存在显著差异，而分布来自用户的移动，因此通过数据可挖掘个体移动信息，从而反映人口流动性、城市经济活跃度等宏观指征。</p>
+<h4 id="二、数据补充与说明"><a href="#二、数据补充与说明" class="headerlink" title="二、数据补充与说明"></a>二、数据补充与说明</h4><h5 id="2-1-地理位置数据"><a href="#2-1-地理位置数据" class="headerlink" title="2.1 地理位置数据"></a>2.1 地理位置数据</h5><ol>
+<li><p>上海市 <font face="courier">6160</font> 个基站的经纬度信息</p>
+</li>
+<li><p>基站附近POI数据：通过调用百度地图地点检索API，我利用 <font face="courier">python</font> 发起网页请求，获得了6160个基站附近500米内12类机构/地点的信息，并记录了数量。为了能够更好的将建筑物进行归类，我采用百度地图提供的21个以及行业分类作为基础，将建筑物最终分为12个大类，包括：美食、酒店、服务、景点、休闲娱乐、教育、医疗、交通、金融、房地产、公司企业、政府机构。我们称这12类建筑物为兴趣地点 <font face="courier">(position of interest, POI)</font> 。此外，我还通过百度地图API获取了基站所属行政区划分等信息。我最终将这些信息整理成了 <font face="courier">station_POI.csv</font> 表格，可以利用 <font face="courier">pandas</font> 一键读取。</p>
+<p>表格含有以下字段：</p>
+<table>
+<thead>
+<tr>
+<th align="center">字段名</th>
+<th align="center">描述</th>
+<th align="center">补充</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><font face="courier">station_id</font></td>
+<td align="center">基站编号</td>
+<td align="center">基础信息</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">lng</font></td>
+<td align="center">经度</td>
+<td align="center">基础信息</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">lat</font></td>
+<td align="center">纬度</td>
+<td align="center">基础信息</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">district</font></td>
+<td align="center">基站所属行政区</td>
+<td align="center">百度地图API获取</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">POI_x, x=1,…,12</font></td>
+<td align="center">附近兴趣地点<font face="courier"> x </font>的数目</td>
+<td align="center">百度地图API获取</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">street</font></td>
+<td align="center">基站所属街道</td>
+<td align="center">百度地图API获取</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">business</font></td>
+<td align="center">基站附近商圈</td>
+<td align="center">百度地图API获取</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<ol start="3">
+<li><p>上海市各区基本信息：一般而言，人口更多、面积更大、经济更发达的区域内，基站记录的数据会更多。为了更好的区分上海市不同区域内的基站及人口流动特征，我利用搜索引擎获取了上海市各区的一些基本数据，包括各区的人口、面积和GDP数据。此外，根据基站所属的区域划分，我还做了一些基本统计。这些信息最终被整理成了 <font face="courier">districtsINFO.csv</font> 表格。</p>
+<p>表格含有以下字段：</p>
+<table>
+<thead>
+<tr>
+<th align="center">字段名</th>
+<th align="center">描述</th>
+<th align="center">补充</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">行政区</td>
+<td align="center">行政区</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+<tr>
+<td align="center">基站数</td>
+<td align="center">该行政区内所有基站数量</td>
+<td align="center">统计获取</td>
+</tr>
+<tr>
+<td align="center">用户数</td>
+<td align="center">被该行政区内基站记录的用户数量</td>
+<td align="center">统计获取</td>
+</tr>
+<tr>
+<td align="center">记录数</td>
+<td align="center">该行政区内所有基站的记录数总和</td>
+<td align="center">统计获取</td>
+</tr>
+<tr>
+<td align="center">GDP</td>
+<td align="center">该行政区2017年GDP数据（单位：亿元）</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+<tr>
+<td align="center">人口</td>
+<td align="center">该行政区内常住人口数目（单位：万人）</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+<tr>
+<td align="center">面积</td>
+<td align="center">该行政区面积（单位：平方千米）</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<p>最终获取的所有地理数据如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">基站基础信息</th>
+<th align="center">基站附近POI数据</th>
+<th align="center">上海市各区数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>数据类型</strong></td>
+<td align="center">已有信息</td>
+<td align="center">调用百度地图API爬取所获得信息</td>
+<td align="center">搜索引擎搜索所获得信息</td>
+</tr>
+<tr>
+<td align="center"><strong>数据内容</strong></td>
+<td align="center">经纬度坐标</td>
+<td align="center">基站方圆500米内12类兴趣地点数目<br>基站所属行政区</td>
+<td align="center">上海市各区的人口、面积、GDP数据</td>
+</tr>
+</tbody></table>
+<center>表1:地理数据概览表</center>
+
+
+
+<h5 id="2-2-用户手机基站统计数据"><a href="#2-2-用户手机基站统计数据" class="headerlink" title="2.2 用户手机基站统计数据"></a>2.2 用户手机基站统计数据</h5><p>该数据描述了一段时间内，用户手机信号被基站记录的数据。表格名为 <font face="courier">mobile.csv</font> ，含有以下字段：</p>
+<table>
+<thead>
+<tr>
+<th align="center">字段名</th>
+<th align="center">描述</th>
+<th align="center">补充</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">user_id</td>
+<td align="center">用户编号</td>
+<td align="center">不同值代表不同用户</td>
+</tr>
+<tr>
+<td align="center">station_id</td>
+<td align="center">基站编号</td>
+<td align="center">不同值代表不同基站</td>
+</tr>
+<tr>
+<td align="center">count</td>
+<td align="center">用户被基站记录次数</td>
+<td align="center">一段时间内用户被基站记录的次数</td>
+</tr>
+</tbody></table>
+<h4 id="三、描述性分析"><a href="#三、描述性分析" class="headerlink" title="三、描述性分析"></a>三、描述性分析</h4><p>为了更好的厘清数据中的基本信息，为后续深入挖掘作准备，首先对数据的一些基础特征进行分析。</p>
+<h5 id="3-1-基站布局"><a href="#3-1-基站布局" class="headerlink" title="3.1 基站布局"></a>3.1 基站布局</h5><p>首先，我对基站的基础布局进行了可视化（图1）。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/1.png" style="zoom:34%;">
+
+<center>图1：基站布局散点图</center>
+
+<p>​        可以看出，上海市基站分布基本遵循“小聚落、大分散”的规律，分布与城市经济发展水平密切相关。在最为繁华的市中心聚集了大量基站，而在偏远的郊区则基站分布极为稀疏。</p>
+<p>​        此外，我们还可以发现在非城市中心地带的其他地区，出现了一些较为明显的基站聚集小块。合理推断，这应当是该区域内的核心商圈或经济活动较为密集的地区。这也比较符合上海市以城市中心商圈为核心，各区域商圈星罗棋布的现状。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/2.png" style="zoom:32%;">
+
+<center>图2：奉贤区基站聚落与商圈聚落比较</center>
+
+<p>​        为了验证我的猜想，我随机选取了图中奉贤区的基站密集处，将该处与百度地图直接搜索“奉贤区 商圈”获得的地图进行比较（图2）。可以看出基站聚落与商圈所在处基本吻合。说明“基站聚集应当是该区域内的核心商圈或经济活动较为密集的地区”的猜想基本正确，为后续用基站分布来推断区域经济活跃程度提供了依据。</p>
+<h5 id="3-2-基站所覆盖用户数据"><a href="#3-2-基站所覆盖用户数据" class="headerlink" title="3.2 基站所覆盖用户数据"></a>3.2 基站所覆盖用户数据</h5><p>其次，我对用户对基站的访问数据进行了基本的统计学分析（图3）。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/outcomes/figure/1_basic_station_statictis.png" style="zoom:30%;">
+
+<center>图3：基本统计分析</center>
+
+<p>​        可以发现，大部分基站的流量都很小，因此用户统计、访问统计和平均访问统计量都出现了长拖尾的现象。说明总体而言，上海市基站布局还不够合理，未能将大部分用户访问流量均匀得分布到各个基站上，出现了明显的“头部基站”和“尾部基站”。前者承担了较大的流量荷载压力，后者却未能发挥自己的全部作用。这暗示城市基站空间布局尚有优化空间。</p>
+<p>​        再来看上海市各区域内基站的平均用户访问次数统计。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/outcomes/figure/1_basic_dstricts_avgVisits.png" style="zoom:30%;">
+
+<center>图4：各区域内平均访问统计</center>
+
+<p>​        从中可以看出，上海市部分区域内的基站布局也出现了不平衡的现象。例如长宁区、黄浦区、静安区、徐汇区这4个区域内的基站平均访问用户分布都出现了明显的尖峰。说明部分区域内基站布局的不平衡是导致总体不平衡的原因。</p>
+<p>​        此外，从图4中也可以看出，上海市各个区域内基站所能记录的人口数据存在明显差异。闵行区、松江区、金山区的平均基站访问用户数据明显低于其他各区。从背景知识可知，这几个区域都是在上海市内经济较为不发达的地区。因此，为了更好的分析这种区域差异的来源，我进行了接下来的上海市各区域基本信息分析。</p>
+<h5 id="3-3-上海市各区域基本信息分析"><a href="#3-3-上海市各区域基本信息分析" class="headerlink" title="3.3 上海市各区域基本信息分析"></a>3.3 上海市各区域基本信息分析</h5><p><img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-%E9%87%91%E8%9E%8D%E5%8F%8A%E7%BB%8F%E6%B5%8E%E5%A4%A7%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/final/AdvFin_Report/3.gif" alt></p>
+<center>图5：上海市基站数据分区汇总</center>
+
+<p>​        在上图中，我将上海市内各个区域内的基站数目、被基站所记录的用户总数(为了能画在一张图中，取了log)，区域GDP和常驻人口数据进行了可视化。不难发现，上海市各个行政区域内的基站数目与人口的相关性较大，与GDP的相关性较小；每个行政区内的被记录用户数的log与区域内人口数据的吻合程度也相当高。这是合理的，因为基站的基础作用是满足居民的通信需求，因而和人口分布的关联程度应当比与经济的关联程度更高。</p>
+<p>​        由此，根据前述分析，我们可以得到的一个基本结论是：基站的相对分布与经济活跃程度密切相关，商圈、城市中心等经济活动密集处基站分布越密集；基站的数目与所处区域的人口数量密切相关，人口数量越多，当前区域内的基站数量可能便越多。</p>
+<h5 id="3-4-各基站附近-POI-分布"><a href="#3-4-各基站附近-POI-分布" class="headerlink" title="3.4 各基站附近 POI 分布"></a>3.4 各基站附近 POI 分布</h5><p>接着，我们来看基站附近的基础设施分布。从上述提到了12类POI中，选取了6类对居民日常生活最为重要的POI进行了可视化。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/4.png" style="zoom:50%;">
+
+<center>图6：基站附近基础设施分布</center>
+
+<p>​        在这 6 幅基础设施分布图中，颜色越深代表周围相应设施越密集。从图中可以看到很明显的地区差异，这与我之前的判断也十分符合：基站的相对分布与经济活跃程度密切相关，而经济活跃程度与以上六种基础设施分布显然是呈正相关系。这使得根据基站记录的信息来进行基础设施乃至区域经济的分析可行。</p>
+<h5 id="3-5-用户行为：兴趣因子"><a href="#3-5-用户行为：兴趣因子" class="headerlink" title="3.5 用户行为：兴趣因子"></a>3.5 用户行为：兴趣因子</h5><p>最后，为了更好的刻画用户与基站交互数据以分析用户的行为，我对用户行为进行了分析。</p>
+<p>​        已知用户 $i$ 被基站 $A$ 记录的次数为 $q_{iA}$。给定用户 $i$ ，给定用户去过的所有基站 $S_{i}$ ，则基站 $A$ 被用户访问的概率为：<br>$$<br>m_{iA} = \frac{q_{iA}}{\sum_{B \in S_i}{q_{iB}}}<br>$$<br>​        则可以定义用户 $i$ 对兴趣地点(POI) $X$ 的<strong>兴趣因子 (interest index)</strong> 为：<br>$$<br>L_{iX} = \sum_{A \in S_i}{ m_{iA} \cdot n_{AX} }<br>$$<br>​        其中 $n_{AX}$ 表示基站 $A$ 附近兴趣地点(POI) $X$ 的个数。 若对用户 $i$ 来说 $L_{iX}$ 最大， 称用户 $i$ 对兴趣地点 $X$ 最感兴趣。</p>
+<p>具体的数据处理细节如下：由于用户数目太多，因此使用spark来进行大规模数据的运算。  </p>
+<ol>
+<li>首先，对基站数据进行清洗。在给定的6160个基站中，删除了位置不在上海的基站，得到6095个基站。  </li>
+<li>然后，对用户数据进行清洗。由于用户访问过的基站不完全在 <font face="courier">station.csv</font> 中，因此删除了在给定基站之外的用户访问记录。 </li>
+<li>最后，根据用户对基站的访问数据，删除了没有被用户访问过的基站。<br>最终对 4069287 条用户访问基站数据进行了上述数据处理，并最终得到了 77937 个用户的兴趣因子。</li>
+</ol>
+<p>选取12个POI中得分最高的3个作为用户的兴趣所在，可以得到以下词云图。词汇的字体越大，表示占比越多。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/5.png" style="zoom:40%;">
+
+<center>图7：词云图</center>
+
+<p>​        从图7中可以发现，在用户兴趣因子最高的前3个POI中，“公司企业”非常显著。这说明在用户的移动过程中，工作或是最主要的影响因素。交通设施在用户最感兴趣的POI中也占了不小的比例，暗示大部分用户在住宅–工作地点的移动过程中较为依赖公共交通设施。这与上海市的基本民情也十分符合。只有在工作和通勤之余，才能考虑休闲和其他事务。因此我们可以发现：尽管休闲娱乐、美食在图 7-(1)和 7-(2) 的词云图中都会出现，但占比始终不高。只有在图 7-(3) 中才较为突出。</p>
+<p>​        此外，从所有这些用户中，我随机选取了10位最感兴趣地点分别为公司企业和旅游景点的用户，可视化了轨迹 (图8)。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/6.png" style="zoom:48%;">
+
+<center>图8：用户轨迹</center>
+
+<p>​        从轨迹中可以看到，这两类用户的行为相差很大。最感兴趣地点为公司企业的用户轨迹呈现明显的条带状，具有典型的郊区 – 市中心通勤特征，说明用户很大概率为常住上海的工作人士。相比之下，最感兴趣地点为旅游景点的用户轨迹呈现两种态势：(1)松散的条带状，代表为ID是63349的用户；(2)小范围内的聚集状，代表为ID是33958的用户。</p>
+<p>​        我们将用户63349和用户33958访问频次最多基站附近的景点在百度地图上标识如下图：</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/7.png" style="zoom:48%;">
+
+<center>图9：景点标识</center>
+
+<p>​        容易发现，图 8-(2) 中右下方的用户聚集区与迪士尼乐园存在明显相关性，且由于这部分用户的轨迹只存在于这一小部分地区，可以推断这些应当是特意到上海迪士尼乐园游玩的短途旅客。而用户63349的轨迹一直从郊区的景点朱家角一直延伸到市内，说明其在上海的停留时间应该不短，可能是一位长途旅客。</p>
+<p>​        利用兴趣因子选取的用户特征如此不同，说明我们所定义的该指标能够很好的概括用户的特性。</p>
+<h4 id="四、建模分析"><a href="#四、建模分析" class="headerlink" title="四、建模分析"></a>四、建模分析</h4><h5 id="4-1-基于区域熵的地点研究"><a href="#4-1-基于区域熵的地点研究" class="headerlink" title="4.1 基于区域熵的地点研究"></a>4.1 基于区域熵的地点研究</h5><p>在生态学中，研究人员使用区域熵来衡量区域内生物多样性<sup>[2]</sup>：多样化的环境倾向于表现出物种的均匀分布（在我们的案例中是用户），而多样化程度较低的环境倾向于表现出偏斜的分布。</p>
+<p>​        在本项目中，区域熵的定义过程如下： </p>
+<p>​        已知用户 $i$ 被基站A记录的次数为 $q_{iA}$，用户 $i$ 去过的所有地点集合为 $\Psi_i$ 。定义用户 $i$ 被基站A记录的概率为 $p_{iA}$<br>$$<br>p_{iA} = \frac{q_{iA}}{ \sum_{X \in \Psi_i}{q_{iX}} }<br>$$<br>​        已知去过地点A的所有用户集合为 $\Phi_A$。则地点A的熵 $E_A$ 被定义为：<br>$$<br>E_A = - \sum_{i \in \Phi_A} p_{iA} \log{p_{iA}}<br>$$</p>
+<p>​        由此，我们可以计算出所有地点的区域熵，如下图所示。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/outcomes/figure/3.1_entropy2.png" style="zoom:60%;">
+
+<center>图10：区域熵</center>
+
+<p>​        首先，从图10左侧的“熵——用户访问次数”散点图中可以看出，被更多的用户访问的地点倾向于具有更高的熵。因此，熵是衡量某区域受欢迎程度的极佳指标。此外，图10右侧的熵分布图在熵值为 2 和熵值为 5.5 附近分别有 2 个峰值，这说明不同区域内的基站具有不同的类型，从而导致区域熵分布不具有同一性。因此，可以对已有基站数据进行聚类分析。</p>
+<h5 id="4-2-基于-Louvain-算法的城市社区划分及人口流动性研究"><a href="#4-2-基于-Louvain-算法的城市社区划分及人口流动性研究" class="headerlink" title="4.2 基于 Louvain 算法的城市社区划分及人口流动性研究"></a>4.2 基于 Louvain 算法的城市社区划分及人口流动性研究</h5><p>行政区划是政府部分根据地区发展和人力、物力资源的空间分布对城市的划分。然而，由于上海的快速发展以及市场经济的影响，当前的人群活动区域与真实的行政区划未必一致，如何快速、准确地获取人群活动区域是新型城市化建设面临的一大挑战。</p>
+<p>​        为此，我们可以使用移动互联网用户手机连接基站的记录对重新划分城市社区——对基站数据进行聚类分析。这需要对基站特征进行深入挖掘。由前述分析可知，用户访问基站附近的建筑与基站产生的交互数据，不仅反映了用户自身行为规律与偏好，也侧面刻画了基站所处区域具备的城市角色与功能。因此，除了使用基站附近的POI数据来作为其特征，用户与基站的交互数据也应当被纳入模型的考虑范围。如果只考虑用户与基站的交互数据，就是一个典型的二部图，但此处只需要使用二部图的一半——基站，来进行聚类分析。因此，我们需要一个将用户与基站交互数据归纳为基站特征的方法。</p>
+<p>​        利用图来进行基站特征的建模是一个比较合理的选择。首先，用户和基站数据的交互可以被看作一个邻接表，天然符合图的特点。其次，推荐系统的协同过滤算法启示我们：如果一个用户和两个物品的交互非常多，那么大概率这两样物品相似或具有某种关联。这使得通过用户与物品的交互（本项目中是用户与基站的交互）来构建物品之间的关系成为可能。因此，我选择使用共有用户来构建图中的边，使用基站的POI表示向量来构建边的权重。算法如下：</p>
+<h6 id="图的建立"><a href="#图的建立" class="headerlink" title="图的建立"></a><font color="black">图的建立</font></h6><p>​        首先定义了共有用户的概念：给定两个基站A和B，定义用户i被基站A记录的次数为 $q_{iA}$ , 被基站B记录的次数为 $q_{iB}$，定义基站A被所有用户的平均访问数为<br>$$<br>\mu_A = \frac{1}{|\Phi_A|} \cdot \sum_{j=1}^{n}{q_{jA}}<br>$$<br>​        其中 $\Phi_A$ 为去过地点A的所有用户集合。如果<br>$$<br>q_{iA} &gt; \mu_A \quad and \quad q_{iB} &gt; \mu_B<br>$$<br>​        则称用户 $i$ 为基站 A 和基站 B 的共有用户，称基站 A 和基站 B 是用户 $i$ 的活跃地点。若两个基站之间存在共有用户，则认为基站间存在一条边。</p>
+<p>​        定义边的权重为两个基站归一化POI表示向量的 Cosine Similarity。</p>
+<p>​        这样做的好处是：(1) 我们选择的共有用户对于基站A和基站B的访问一定是显著的，而非偶然性经过，排除了一定的数据噪声。因此共有用户更多的基站之间的边数目会更多，联系更紧密。(2) 利用POI表示向量的Cosine Similarity来定义基站之间边的权重，可以让两个更相似的基站间的权重更大，更容易被划分到同一社区中。总体而言，这样的图构建方式是合理的。</p>
+<p>具体的数据处理过程如下：</p>
+<ol>
+<li>由于数据中含有7万多名用户，数据量太多。因此首先对用户进行了筛选，过滤曾去过上海以外地方的用户。然后，按照上述定义，我们得到了64005个共有用户。</li>
+<li>考虑到基站只是记录了短时间内用户的活跃地点，因此如果用户在上海市内过于活跃，则说明该用户的数据并没有太大意义。据个例子就可以明白，若用户为一名司机，则司机的职业就是在上海市内不停游走，导致用户的活跃地点数据并不能反映两个地点之间的联系。因此，我们过滤了活跃地点&gt;20的用户，得到了42965个种子用户。</li>
+<li>根据这42965个种子用户，我们构建了一个目标Graph的候选边集合 $\tilde{E}$。$\tilde{E}$ 中大约含有上百万条边，如果单纯的利用这上百万条边来构建Graph，则会造成一些噪声。我们的边是利用用户得来的，并不是所有用户对地点的访问都是有意义的。所以对得到的边，我又进行了过滤：删除掉了两个基站表示向量的 Cosine Similarity 过小 ($\le 0.01$) 的边。</li>
+<li>最终我们构建的图 $G=(V, E)$ 含有 327530 条边和 4345 个基站。图的度分布如下：</li>
+</ol>
+<h6 id="社区分割算法"><a href="#社区分割算法" class="headerlink" title="社区分割算法"></a><font color="black">社区分割算法</font></h6><p>​        社区分割是 graph 领域聚类算法的别称。模块度是一种评估社区划分好坏的度量指标，这个概念由Newman在2003年提出。它的物理意义是社区内部边的权重减去所有与社区顶点相连的边的权重和。模块度 (Modularity) 的定义如下：<br>$$<br>Q = \frac{1}{2m} \sum_{i,j}{ \left[  A_{i,j}- \frac{k_i k_j}{2m}  \right] \delta(c_i, c_j) }<br>$$<br>​        其中 $A_{i,j}$ 是边 $(i,j)$ 的权重, $k_i$ 是结点 $i$ 的度数, $c_i$ 是结点 $i$ 所属社区的 Index,  $m$ 是整个网络的总度数。</p>
+<p>​        Louvain 算法是基于模块度的聚类算法，或称社区分割算法。算法使用模块度来作为优化的目标（最大化社区的模块度），是一个无监督聚类算法。直观上来看，模块度倾向于将更相似的结点划分到同一个社区中，其相似性由两样东西衡量：结点之间的联系是否紧密，结点之间的权重是否很大。这与我们之前的讨论不谋而合。实验表明，Louvain 算法能够较好的平衡结点之间联系与结点之间权重对模块度的影响，结果比较符合真实的社区结构。</p>
+<p>​        采用Louvain 算法对前一步构建的基站图进行社区划分的结果如图11所示。经过7次迭代，算法将 4345 个基站划分为了9个社区。图11 (1) 的图例标注了每个社区的中心结点。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/8.png" style="zoom:40%;">
+
+<center>图11：社区分割结果与上海市行政区划对比</center>
+
+<h6 id="社区分割结果与人口流动性分析"><a href="#社区分割结果与人口流动性分析" class="headerlink" title="社区分割结果与人口流动性分析"></a><font color="black">社区分割结果与人口流动性分析</font></h6><p>​        Louvain 算法的社区分割呈现出一块块的“城市聚落”。我们将算法得到的社区与上海市行政区划分进行了对比。可以发现，算法得到的社区分割结果与行政区划分非常相近，分割出社区的边界与行政区划的边界重合了大半。可以将 图11 中 7 个较为显著的社区（用社区中心结点表示）所覆盖的行政区整理如下表：</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">2905</th>
+<th align="center">329</th>
+<th align="center">1769</th>
+<th align="center">1448</th>
+<th align="center">899</th>
+<th align="center">288</th>
+<th align="center">2636</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">覆盖<br>行政区</td>
+<td align="center">青浦<br>松江<br>闵行</td>
+<td align="center">松江<br>闵行</td>
+<td align="center">宝山<br>浦东<br>杨浦</td>
+<td align="center">奉贤<br>南汇</td>
+<td align="center">嘉定<br>青浦</td>
+<td align="center">静安、徐汇<br>长宁、普陀<br>虹口、黄浦<br>崇明</td>
+<td align="center">金山</td>
+</tr>
+</tbody></table>
+<p>​        从上表和图11中能得到一个简单结论是，被划分到同一社区的基站在地理上都相距不远。这启迪了我们从算法层面对结果进行解释：由于我们的社区分割算法是由模块度进行指导的，而模块度倾向于将联系更紧密、更相似的基站划分到一起——也就是说，将共有用户更多、POI向量更相似的基站划分到一起。大胆推测，这样的社区分割结果可能是由于上海市各个区域之间的人口流动造成的。人口流动较为密集的区域中的基站，共有用户数量更多，因此在社区分割算法的计算过程中更有可能被划分到一起。当然，基站之间的POI相似度也会影响社区划分结果，但从结果中可以看出，这是划分结果的次要影响因素（以POI为核心的聚类算法应当呈现出一种从中心向四周扩散的趋势，在4.3中将会提及）。</p>
+<p>​        为了验证上述猜想，我们试图可视化上海市各个区域之间的人口流动结果。由于给定的基站数据未曾标明用户的移动轨迹，因此需要对数据进行分析。在之前利用兴趣因子对用户行为进行的挖掘中，我们已经发现“公司企业”和“交通设施”是用户兴趣因子最大的两类POI，从而得出的结论是：在用户的移动过程中，工作或是最主要的影响因素。因此，工作地点和居住地点应该是用户停留次数最多、访问最密集的地点。基于此，我们将用户访问次数最多的前两个基站作为其居住地和工作地，绘制了以下的人口流动矩阵（图12）。其中图12 (a)中的矩阵每一格 $M(i,j)$ 的值代表了从 $i$ 地流向 $j$ 地人口数的 $log_{2}$ 对数；图12(b)中矩阵是基于图12(a) 计算得到的相关性矩阵，数值越接近1代表两地越相关。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/10.png" style="zoom:48%;">
+
+<center>图12：人口流动矩阵</center>
+
+<p>​        从图12 (b) 中可以发现，左上角的5个区之间人口流动非常密集，这五个区是黄浦、徐汇、长宁、静安和普陀，因此在图11的社区分割结果中，这5个区都被划分到了一起。值得注意的是，崇明区是典型的上海郊区，但是也与这5个位于上海中心的区域被划分在了一起，这可能是由于算法初始化时将位于两地的基站划分在了同一社区，而基于模块度的算法有时会倾向于形成更大的社团结构，因此在后续的迭代中没有将两个社区划分开。此外，金山区被单独划分为了一个社区的原因也可以在图12中轻易找到：从图12 (a)中可以看到金山区所处的行和列呈现出一个明显的暗色区域，表明它既很少向别的区域输送人口，也很少有人移居或到此处工作；图12 (b)的相关系数就更为直观，金山区是唯一一个和所有其他区域的相关系数都小于 $0.10$ 的区域，因此被单独划分为了一个社区。</p>
+<p>​        人口流动矩阵印证了我们的猜想：图11的社区分割结果是由于上海市各个区域之间的人口流动造成的。此外，中心城区人口流动的频繁与偏远程度人口流动的凝滞也侧面印证了人口流动与经济发展程度是相关的。</p>
+<h5 id="4-3-基于-POI-的区域经济增长因素分析"><a href="#4-3-基于-POI-的区域经济增长因素分析" class="headerlink" title="4.3 基于 POI 的区域经济增长因素分析"></a>4.3 基于 POI 的区域经济增长因素分析</h5><p>党的十九大报告指出，“我国经济已由高速增长阶段转向高质量发展阶段，正处在转变发展方式、优化经济结构、转换增长动力的攻关期，建设现代化经济体系是跨越关口的迫切要求和我国发展的战略目标”。而在现代城市中，经济的持久健康发展需要城市不断调整自身的功能布局与产业结构，建立产业功能区，实现城市与产业耦合共生。这对城市规划提出了很高要求。</p>
+<p>​        由于Louvain 算法的结果较大程度的受区域间人口流动的影响，因此城市中一些功能性建筑(包括基础设施、娱乐设施等)的重要性其实是被忽略的。为了更好的挖掘城市基础设施建设与区域经济发展的关系，该部分将着重探索基站附近 POI 的作用和影响。</p>
+<p>​        首先，我们对上海市16区域内的基础设施（教育、医疗、交通、生活服务、政府机构）进行了简单的可视化，如图13所示。上海市各区域基础设施呈现出崎岖不平的地貌环境，中间高，四周低。从图中可以看到，上海市内的基础设施较为集中的几个区域是静安区、徐汇区、长宁区和黄浦区。而除浦东新区之外，这几个区域无一例外的都位于上海市中心地带。</p>
+<p><img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-%E9%87%91%E8%9E%8D%E5%8F%8A%E7%BB%8F%E6%B5%8E%E5%A4%A7%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/final/AdvFin_Report/9.gif" alt></p>
+<center>图13：上海市各区域基础设施地貌</center>
+
+<p>​        接着，我们采用GMM模型以基站附近的基础设施数据（教育、医疗、交通、生活服务、政府机构）作为基础对上海市内的6160个基站进行了聚类分析。由于GMM模型需要指定类的个数，所以我们还进行了模型遍历，并利用BIC和AIC（ 图14 (a) ）选择了最优的模型。模型最终的聚类效果如图14 (b) 所示。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/11.png" style="zoom:40%;">
+
+<center>图14：GMM聚类分析</center>
+
+<p>​        以POI为核心聚类算法的聚类结果呈现出从中心向四周扩散的趋势。正如 图13 中所示的那样，在城市中心地带集中了大量的基础设施，导致分布在城市中心的基站被分在了一起。但同时也可以看到，橙色的点（代表附近基础设施最为集中的一类基站）在上海市的外围也有分布，说明尽管上海市的16个区域之间存在着明显的基础设施差异，但在外围区域的局部地点，其基础设施密度可能与城市中心相差无几。此外，还可以看到城市外围的基站分布出现了明显的族群现象：中心为粉色点与紫色点，靠近中心的为绿色点，外围为蓝色点，弥散区域为黄色点（图15）。这也与之前上海市基站分布“小聚落、大分散”，以城市中心商圈为核心，各区域商圈星罗棋布的现状相吻合。整体上，上海市的城市化是从中心向四周扩张的。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/12.png" style="zoom:38%;">
+
+<center>图15：城市外围聚类族群</center>
+
+<p>​        在此前的描述性分析中，我们知道基站的相对分布与经济活跃程度密切相关，商圈、城市中心等经济活动密集处基站分布越密集。因此，基站、尤其是基站附近的基础设施数据应当能够反映基站附近的经济繁华程度。由于我们很难获得基站附近的比较有代表性的经济指标，因此在这里只能以上海市16个区域为基本单位进行分析。我们将12个POI（美食、酒店、服务、景点、休闲娱乐、教育、医疗、交通、金融、房地产、公司企业、政府机构）作为基本变量，用决策树分析了其与区域GDP之间的关系。每个变量对GDP的贡献如下图所示:</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/16.png" style="zoom:50%;">
+
+<center>图16：相关变量贡献率</center>
+
+<p>​        从该决策树中分析可得到，对GDP最主要的影响因素是区域内公司企业的数量，其次是交通、医疗、人口、面积、政府机构、房地产与教育。公司企业是上海城市经济得以高质量发展的主推力。交通、医疗、房地产、教育与政府机构为城市经济持续健康发展提供了有力的后勤支撑。人口和土地面积是经济发展的基本保障。总体而言，上海已经构建了“人口—城市—产业”协调发展的基本布局。</p>
+<h5 id="4-4-城市功能区划分"><a href="#4-4-城市功能区划分" class="headerlink" title="4.4 城市功能区划分"></a>4.4 城市功能区划分</h5><p>综合 4.2 和 4.3 得出的结果，我们得到了城市功能区划分如下图17所示。不同的颜色代表不同的区块，同一颜色的区域说明此区块中的基站构成一个稳定的社区，即拥有较为稳定的人口活动和类似的城市设施。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/17.png" style="zoom:33%;">
+
+<center>图17：城市功能区划分</center>
+
+<p>​        其中Class 0到2的标签由所属基站的Top POI进行选举：Class 0 标记的基站大部分Top POI都为公司企业，因此被标记为核心功能区；Class 1标记的基站大部分Top POI都为房地产，因此被标记为居民区；Class 2标记的基站大部分附近Top POI是休闲和景点，因此被标记为旅游线路区。而Class 4 和 Class 5由于所属基站的Top POI 比较平均，因此采用地理位置对其进行分类，属于上海的郊区。</p>
+<blockquote>
+<p>给定基站 $A$ 的 POI 向量：$Vec_{A} = (x_1, x_2, …, x_{12}), \quad x_i = 基站,A,附近兴趣地点,i,的数目$ ，基站 $A$ 的 Top POI 定义为<br>$$<br>Top ,, POI = arg\max_{i} \left{x_i, ,,i=1,…,12\right}<br>$$<br>即基站 $A$ 附近最多的一类建筑所属的类别。</p>
+</blockquote>
+<h4 id="五、总结与分析"><a href="#五、总结与分析" class="headerlink" title="五、总结与分析"></a>五、总结与分析</h4><p>在本次项目中，我们对数据进行了翔实而仔细的分析，得到了以下的结论：</p>
 <ul>
-<li>一种办法是在Reduce任务中，对{value}表中的各个value进行排序。但当{value}列表数据量巨大、无法在本地内存中进行排序时，将出现问题。</li>
-<li>更好的办法是利用MapReduce过程中的Partition过程会对Map输出key进行排序的效应，在分发过程中就完成对value的排序。想要做到这一点，就需要将value中需要排序的部分加入到key中，使key成为复合键。 </li>
+<li>上海市基站分布基本遵循“小聚落、大分散”的规律，分布与城市经济发展水平密切相关。</li>
+<li>上海市基站布局还不够合理，未能将大部分用户访问流量均匀得分布到各个基站上，出现了明显的“头部基站”和“尾部基站”。城市基站空间布局尚有优化空间。</li>
+<li>提出了兴趣因子来建模用户偏好，能够较好的反映用户的特性。</li>
+<li>上海市不同区域内的基站具有不同的类型，区域熵分布不具有同一性。</li>
+<li>上海市区域之间的人口流动具有地理偏向性，地理位置相近的地点人口联系较为紧密。人口流动也与经济发展程度相关，经济活动较为密集的市中心城区内人口流动也较为频繁。</li>
+<li>上海市的城市化是从中心向四周扩张的。对区域经济影响最大的因素是区域内公司企业的数量，其次是交通、医疗、人口、面积、政府机构、房地产与教育。</li>
+<li>上海市城区总体可以划分为5类，分别为：核心工作区、居民生活区、旅游线路区、近郊区和远郊区。</li>
 </ul>
-<p>举例来说，本来Map任务输出的键值对是（word, (doc_titile, word_frequency)）。现在为了实现对word_frequency的排序，我们将Map的输出重置为（(word, word_frequency), doc_titile）。</p>
-<p>但这样会带来一个问题：我们仍然想要将同一个word对应的key-value pair放到同一个reduce任务下，但是现在的key是一个复合键。为此，需要实现一个新的Partitioner：从（word, word_frequency）中取出word，以word作为key进行分区。</p>
-<p>了解到这些以后，就可以进行MR倒排文档生成了。</p>
-<h3 id="2-本次任务"><a href="#2-本次任务" class="headerlink" title="2.本次任务"></a>2.本次任务</h3><ul>
-<li>倒排文档生成函数：带有payload的倒排文档索引</li>
-<li>文档查询函数：以contenttile为文本名。实现根据查询关键词，返回相关文档名（序列）</li>
-<li>提交查询返回结果的截屏</li>
+<p>尽管通过数据挖掘，我们得到了以上有价值的结论，但项目实践过程还是有一些不足之处：首先，由于获得的基站数据缺乏时间和空间维度，在具体的人员流动上面无法作出有效的建模，因此所获得的城市空间特征并不完善；其次，由于基站附近经济数据（例如基站附近商户的营业额）的缺失，导致我们无法进行进行更细粒度的区域经济增长因素分析，是另一个遗憾。如果能够获得这些数据，相信本项目的建模会更加精确，也能做出更多有意义的分析。</p>
+<h4 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h4><p>[1] 谭克俭. 移动通信大数据研究揭示人口流动规律[N]. 中国人口报,2020-01-03(003).</p>
+<p>[2] Cranshaw, Justin &amp; Toch, Eran &amp; Hong, Jason &amp; Kittur, Aniket &amp; Sadeh, Norman. (2010). Bridging the gap between physical location and online social networks. UbiComp’10 - Proceedings of the 2010 ACM Conference on Ubiquitous Computing. 119-128. 10.1145/1864349.1864380. </p>
+<p>[3] Blondel, V.D., Guillaume, J., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks.</p>
+<p>[4] 刘恒鑫.城市轨道交通规划与城市发展的互动作用[J].人民交通,2020(05):87+89.</p>
+<p>[5] 张景波. 城市经济高质量发展的空间差异及收敛性研究[D].东北财经大学,2019.</p>
+<p>[6] 谢瑞武.产业功能区如何推动城市高质量发展[J].开放导报,2019(06):77-80.</p>
+]]></content>
+      <categories>
+        <category>课程</category>
+      </categories>
+      <tags>
+        <tag>数据挖掘</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MapReduce编程实践1</title>
+    <url>/2020/04/08/Large-scaleDistributedSystem01/</url>
+    <content><![CDATA[<h3 id="MapReduce"><a href="#MapReduce" class="headerlink" title="MapReduce"></a>MapReduce</h3><p>MapReduce是一种新的分布式并行计算框架，能够在HDFS和Yarn的支持下完成海量大数据计算与处理的任务。最早起源于Google的GFS系统，是Google为了处理PB级别的网页数据而设计的。<br>MapReduce的优势在于可以对海量数据进行并行计算，并且能够高效的部署在廉价的计算机集群上，因而受到广泛使用。它的基本思想是分而治之。</p>
+<p>MapReduce借鉴了函数式程序设计语言Lisp中的思想，定义了如下的Map和Reduce两个抽象的编程接口，由用户去编程实现:</p>
+<ul>
+<li>Map: (k1; v1) -&gt; [(k2; v2)]</li>
+<li>Reduce: : (k2; [v2]) -&gt; [(k3; v3)]</li>
 </ul>
-<p>数据样本下载地址：<a href="https://pan.baidu.com/s/1UZHOMw_uhLMBCLX9uBBAQA" target="_blank" rel="noopener">密码 : rdx8</a></p>
-<h3 id="3-代码示例"><a href="#3-代码示例" class="headerlink" title="3.代码示例"></a>3.代码示例</h3><p>环境配置</p>
+<p>各个map函数对所划分的数据并行处理，从不同的输入数据产生不同的中间结果输出。<br>各个reduce也各自并行计算，各自负责处理不同的中间结果数据集合。</p>
+<a id="more"></a>
+
+<h3 id="本次任务"><a href="#本次任务" class="headerlink" title="本次任务"></a>本次任务</h3><p>编写MR程序（java或python）对sample.txt中有关文件信息进行处理，任务如下：<br>&nbsp;&nbsp;&nbsp;&nbsp;1.统计其中各类文件的数量（按文件名后缀区分类型）<br>&nbsp;&nbsp;&nbsp;&nbsp;2.按文件的字节数大小降序排序输出文件名</p>
+<p>sample.txt 包含85行建筑设计中的各类文件信息，数据片段和格式说明如下:</p>
+<table>
+    <tr>
+        <th rowspan="3">sample.txt</th>
+        <th>日期</th>
+        <th>时间</th>
+        <th>字节数</th>
+        <th>文件名（后缀为dwg）</th>
+    </tr>
+    <tr>
+        <td>2014/10/21</td>
+        <td>07:30</td>
+        <td>3,395,145</td>
+        <td>02-01一层平面图.dwg</td>
+    </tr>
+    <tr>
+        <td>2014/10/21</td>
+        <td>07:29</td>
+        <td>924,099</td>
+        <td>02-02二层平面图.dwg</td>
+</tr></table>
+
+<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><p>环境配置</p>
 <ul>
 <li>阿里云ECS Ubuntu 16.04</li>
 <li>java: open jdk-7</li>
 <li>hadoop: 2.9.2</li>
-<li>python: 3.5</li>
+<li>python: 3.5<ul>
+<li>mrjob 0.7.1</li>
 </ul>
-<h4 id="3-1-解决中文乱码问题"><a href="#3-1-解决中文乱码问题" class="headerlink" title="3.1 解决中文乱码问题"></a>3.1 解决中文乱码问题</h4><p>由于下载的文件不是utf-8编码，而是gbk编码的。为了后续编程方便和一致性(jieba的官方文档说如果输入的字符串是gbk编码可能会出现未知错误)，建议将文件先转码为utf-8编码。具体操作是：首先在MacOS文本编辑器的偏好设置里，将文件的打开编码设置为gbk，保存编码设置为utf-8，然后打开下载的文件，另存为…即可。然后要记得把文本编辑器的偏好设置改回来（即打开/关闭编码都最好是utf-8）。</p>
-<p>然后，将下载的文件scp到已经配好环境的ECS服务器上。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">scp local_file_path username@server:host_file_path</span><br></pre></td></tr></table></figure>
-<p>这里建议不管是不是使用云服务器，都检查一下当前使用终端的字符集是否支持中文。如果不支持，在服务器上还是会出现中文乱码问题，可以参照这个链接：<a href="https://blog.csdn.net/weixin_34236497/article/details/94046218" target="_blank" rel="noopener">ubuntu16.04解决文件中文乱码问题</a>。</p>
-<h4 id="3-2-mapper-py"><a href="#3-2-mapper-py" class="headerlink" title="3.2 mapper.py"></a>3.2 mapper.py</h4><p>与上一篇mapreduce实践不同，这次因为要实现payload，所以选用了hadoop streaming来编程。相比mrjob，hadoop streaming更为灵活，用户能够自定义更多特性，而且输入输出都是字符串的特性也比较简单好操作。具体的一些工作原理可以参考官方文档：<a href="http://hadoop.apache.org/docs/r2.9.2/hadoop-streaming/HadoopStreaming.html" target="_blank" rel="noopener">Hadoop Streaming</a>。</p>
-<p>这里简单介绍一下，hadoop streaming支持多种语言进行编程，包括java 和python。它只规定了mapper和reducer都必须是可执行文件。这次实践我们采用hadoop streaming + python。</p>
-<p>mapper.py从stdin中读入文件，它要做的事是从输入的字符串中：</p>
-<ol>
-<li>识别出文档内容和文档名称</li>
-<li>对文档内容进行分词（需要安装python第三方库jieba）</li>
-<li>返回(单词，所在文档，词频)这样的key-value pair</li>
-</ol>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> jieba</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> Counter</span><br><span class="line"></span><br><span class="line">pattern1 = <span class="string">r"&lt;[a-zA-Z]*&gt;"</span>  <span class="comment"># &lt;&gt;</span></span><br><span class="line">pattern2 = <span class="string">r"&gt;[^a-z]*"</span>  <span class="comment"># &gt;&lt;</span></span><br><span class="line">pattern3 = <span class="string">r"\".+?\""</span></span><br><span class="line"></span><br><span class="line">contents = []</span><br><span class="line">titles = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> sys.stdin:</span><br><span class="line">    result = re.search(pattern1, line)</span><br><span class="line">    <span class="keyword">if</span> result <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">        typo = result.group()[<span class="number">1</span>:<span class="number">-1</span>]</span><br><span class="line">        _text = re.search(pattern2, line).group()[<span class="number">1</span>:<span class="number">-2</span>] <span class="comment"># omit "\n" and "&gt;"</span></span><br><span class="line">        <span class="keyword">if</span> typo == <span class="string">"content"</span>:</span><br><span class="line">            contents.append(_text)</span><br><span class="line">        <span class="keyword">elif</span> typo == <span class="string">"contenttitle"</span>:</span><br><span class="line">            _text = _text[:<span class="number">-1</span>] <span class="keyword">if</span> (_text != <span class="string">""</span> <span class="keyword">and</span> _text[<span class="number">-1</span>] == <span class="string">"（"</span>) <span class="keyword">else</span> _text</span><br><span class="line">            titles.append(_text)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(len(titles)):</span><br><span class="line">    title, doc = titles[i], contents[i]</span><br><span class="line">    seg_list = list(jieba.cut(doc, cut_all=<span class="literal">True</span>)) <span class="comment"># precise mode</span></span><br><span class="line">    counter = Counter(seg_list)</span><br><span class="line">    <span class="keyword">for</span> pos, word <span class="keyword">in</span> enumerate(set(seg_list)):</span><br><span class="line">        print(<span class="string">"&#123;&#125;@&#123;&#125;\t&#123;&#125;"</span>.format(word, counter[word], title))</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="统计各类文件的数量"><a href="#统计各类文件的数量" class="headerlink" title="统计各类文件的数量"></a>统计各类文件的数量</h4><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> mrjob.job <span class="keyword">import</span> MRJob</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"></span><br><span class="line">pattern1 = <span class="string">r"[0-9]*,*[0-9]+,[0-9]&#123;3&#125;"</span> <span class="comment"># number of bytes</span></span><br><span class="line">pattern2 = <span class="string">r"\.[a-z]+"</span> <span class="comment"># file type</span></span><br><span class="line">pattern3 = <span class="string">r" [^ ]+\.[a-z]+$"</span> <span class="comment"># file name</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">str2int</span><span class="params">(input)</span>:</span></span><br><span class="line">    a = <span class="string">""</span>.join(input.split(<span class="string">','</span>))</span><br><span class="line">    <span class="keyword">return</span> int(a)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CountWorker</span><span class="params">(MRJob)</span>:</span></span><br><span class="line">    <span class="string">""" Count the number of each type of files. """</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mapper</span><span class="params">(self, file_name, line)</span>:</span></span><br><span class="line">        <span class="string">""" Input Context: Date, Time, #Bytes, Name """</span></span><br><span class="line">        file_type = re.search(pattern2, line).group()[<span class="number">1</span>:]</span><br><span class="line">        <span class="keyword">yield</span> file_type, <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">reducer</span><span class="params">(self, key, values)</span>:</span></span><br><span class="line">        <span class="keyword">yield</span> key, sum(values)</span><br></pre></td></tr></table></figure>
 
-<h4 id="3-3-reducer-py"><a href="#3-3-reducer-py" class="headerlink" title="3.3 reducer.py"></a>3.3 reducer.py</h4><p>reducer要做的事情，是从stdin中读入mapper的输出，按照（单词，所有包含该单词的文档）形式组织好数据并输出。<br><strong>注意：partitioner在输出key/value pair的时候，会在key与value之间加一个“\t”</strong></p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict</span><br><span class="line"></span><br><span class="line">out_dict = defaultdict(list)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> sys.stdin:</span><br><span class="line">    key, value = line.split(<span class="string">"\t"</span>)</span><br><span class="line">    word, count = key.split(<span class="string">"@"</span>)</span><br><span class="line">    out_dict[word].append(value[:<span class="number">-1</span>]+<span class="string">"@"</span>+count)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> word, value_list <span class="keyword">in</span> out_dict.items():</span><br><span class="line">    titles = <span class="string">"&lt;SEP&gt;"</span>.join(value_list)</span><br><span class="line">    print(<span class="string">"&#123;&#125;\t&#123;&#125;"</span>.format(word, titles))</span><br></pre></td></tr></table></figure>
+<h4 id="按文件字节数降序输出文件名"><a href="#按文件字节数降序输出文件名" class="headerlink" title="按文件字节数降序输出文件名"></a>按文件字节数降序输出文件名</h4><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RankWorker</span><span class="params">(MRJob)</span>:</span></span><br><span class="line">    <span class="string">""" Ranking in the descending order of #Bytes. """</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mapper</span><span class="params">(self, file_name, line)</span>:</span></span><br><span class="line">        <span class="string">""" Input Context: Date, Time, #Bytes, Name """</span></span><br><span class="line">        num_bytes = str2int(re.search(pattern1, line).group())</span><br><span class="line">        Name = re.search(pattern3, line).group()[<span class="number">1</span>:]</span><br><span class="line">        <span class="keyword">yield</span> <span class="number">1</span>, (num_bytes, Name)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">reducer</span><span class="params">(self, key, values)</span>:</span></span><br><span class="line">        values = sorted(values)</span><br><span class="line">        <span class="keyword">for</span> num_bytes, Name <span class="keyword">in</span> values[::<span class="number">-1</span>]:</span><br><span class="line">            <span class="keyword">yield</span> num_bytes, Name</span><br></pre></td></tr></table></figure>
 
-<h4 id="3-4-run-sh"><a href="#3-4-run-sh" class="headerlink" title="3.4 run.sh"></a>3.4 run.sh</h4><p>在前文中我们有提到，为了将同一个word对应的key-value pair放到同一个reduce任务下，需要实现一个新的Partitioner：从（word, word_frequency）中取出word，以word作为key进行分区。在Hadoop Streaming中这个具体应该怎么实现呢？</p>
-<p>很简单。Hadoop有一个工具类org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner， 它在应用程序中很有用。Map/reduce框架用这个类切分map的输出， 切分是基于key值的前缀，而不是整个key。举例来说：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$HADOOP_HOME</span>/bin/hadoop  jar <span class="variable">$HADOOP_HOME</span>/hadoop-streaming.jar \</span><br><span class="line">    -input myInputDirs \</span><br><span class="line">    -output myOutputDir \</span><br><span class="line">    -mapper org.apache.hadoop.mapred.lib.IdentityMapper \</span><br><span class="line">    -reducer org.apache.hadoop.mapred.lib.IdentityReducer \</span><br><span class="line">    -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner \</span><br><span class="line">    -jobconf stream.map.output.field.separator=. \</span><br><span class="line">    -jobconf stream.num.map.output.key.fields=4 \</span><br><span class="line">    -jobconf map.output.key.field.separator=. \</span><br><span class="line">    -jobconf num.key.fields.for.partition=2 \</span><br><span class="line">    -jobconf mapred.reduce.tasks=12</span><br></pre></td></tr></table></figure>
-<p>其中，Streaming使用-jobconf stream.map.output.field.separator=. 和-jobconf stream.num.map.output.key.fields=4这两个变量来得到mapper的key/value对。</p>
-<p>上面的Map/Reduce 作业中map输出的key一般是由“.”分割成的四块。但是因为使用了 -jobconf num.key.fields.for.partition=2 选项，所以Map/Reduce框架使用key的前两块来切分map的输出。其中， -jobconf map.output.key.field.separator=. 指定了这次切分使用的key的分隔符。这样可以保证在所有key/value对中， key值前两个块值相同的所有key被分到一组，分配给一个reducer。</p>
-<p>这种高效的方法等价于指定前两块作为主键，后两块作为副键。 主键用于切分块，主键和副键的组合用于排序。</p>
-<p>因此，我们只需要在执行程序的时候指明所用的partitioner和分区，就可以实现“按照一部分key的值进行排序”的功能。这里，为了避免每次启动hadoop的时候都要反复手动输入shell脚本，需要一个.sh文件来保存会在终端进行的输入。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/env bash</span></span><br><span class="line">rm ./part-00000</span><br><span class="line">hdfs dfs -rm -r bigdata/output/</span><br><span class="line"></span><br><span class="line"><span class="comment"># sprcify -D &lt;options&gt; at the beginning</span></span><br><span class="line"><span class="comment"># otherwise hadoopstreaming will fail to recognize these options</span></span><br><span class="line">hadoop jar <span class="variable">$HADOOP_HOME</span>/share/hadoop/tools/lib/hadoop-streaming-2.9.2.jar \</span><br><span class="line">-D map.output.key.field.separator=@ \</span><br><span class="line">-D mapreduce.partition.keypartitioner.options=-k1,1 \</span><br><span class="line">-D mapreduce.job.output.key.comparator.class=org.apache.hadoop.mapreduce.lib.partition.KeyFieldBasedComparator \</span><br><span class="line">-D mapreduce.partition.keycomparator.options=-k2nr \</span><br><span class="line">-input bigdata/inputs/news_tensite_xml.smarty.dat \</span><br><span class="line">-output bigdata/output/ \</span><br><span class="line">-mapper <span class="string">"python3 mapper.py"</span> \</span><br><span class="line">-reducer <span class="string">"python3 reducer.py"</span> \</span><br><span class="line">-partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner \</span><br><span class="line"></span><br><span class="line"><span class="comment"># get file from HDFS to local and visualize them</span></span><br><span class="line">hdfs dfs -get bigdata/output/part-00000 ./</span><br><span class="line">head -100 part-00000</span><br><span class="line"></span><br><span class="line"><span class="comment"># Tips:</span></span><br><span class="line"><span class="comment"># if we do not use "\t" to seperate key/value pair</span></span><br><span class="line"><span class="comment"># we need to specify</span></span><br><span class="line"><span class="comment"># -D stream.map.output.field.separator=@ \</span></span><br><span class="line"><span class="comment"># -D stream.num.map.output.key.fields=2 \</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="3-5-query-py"><a href="#3-5-query-py" class="headerlink" title="3.5 query.py"></a>3.5 query.py</h4><p>文档查询函数最简单的实现是：以contenttile为文本名。实现根据查询关键词，返回相关文档名（序列）。但是这里，我们想要实现的是：根据输入的word序列，查找与该序列最相关的文档，并输出文档名。</p>
-<p>因此，我们需要使用TF-IDF模型来构建文档向量，<br>$$docVec[i, :] = (w_{i1}, …, w_{ij}, …, w_{iN})$$<br>其中 $w_{ij}= TF_{ij} * IDF_{j}$<br>$$TF_{ij}=\frac{单词j在文档i中出现频率}{文档i的词数},  IDF_{j}=\frac{总文档数目}{含有单词j的文档数目}$$<br>由此，我们只需要按照输入单词序列构建查询向量，然后计算查询向量与文档向量的cosine相似度即可。</p>
-<p>具体代码实现如下：(这里设置了early break=5，也就是只print前5个最相关的文档名)</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">start = time()</span><br><span class="line">print(<span class="string">"Now loading MapReduce outcome..."</span>)</span><br><span class="line">query_dict = &#123;&#125; <span class="comment"># word-&gt;[doc_names : freq]</span></span><br><span class="line">doc_count = &#123;&#125; <span class="comment"># 文档次数统计</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> open(<span class="string">"./part-00000"</span>, <span class="string">"r"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:</span><br><span class="line">    lines = f.readlines()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> line <span class="keyword">in</span> lines:</span><br><span class="line">        word, rest = line.split(<span class="string">"\t"</span>)</span><br><span class="line">        titles = rest.split(<span class="string">"&lt;SEP&gt;"</span>)</span><br><span class="line"></span><br><span class="line">        word2doc = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> title <span class="keyword">in</span> titles:</span><br><span class="line">            doc, freq = title.strip().split(<span class="string">"@"</span>)</span><br><span class="line">            word2doc[doc] = int(freq)</span><br><span class="line">            doc_count[doc] = int(freq) + doc_count.get(doc, <span class="number">0</span>)</span><br><span class="line">        query_dict[word] = word2doc</span><br><span class="line"></span><br><span class="line">doc_list = list(doc_count.keys())</span><br><span class="line">doc_idx = &#123;doc:i <span class="keyword">for</span> i, doc <span class="keyword">in</span> enumerate(doc_list)&#125;</span><br><span class="line"></span><br><span class="line">word_list = list(query_dict.keys())</span><br><span class="line">word_idx = &#123;word:i <span class="keyword">for</span> i, word <span class="keyword">in</span> enumerate(word_list)&#125;</span><br><span class="line"></span><br><span class="line">M, N = len(doc_list), len(word_list)</span><br><span class="line">print(<span class="string">"Finished! Document dict and Word dict has been built..."</span>)</span><br><span class="line">print(<span class="string">"Time cost: &#123;:.2f&#125;\n"</span>.format(time()-start))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">construct_TFIDF</span><span class="params">(M, N, doc_dict, doc_idx, word_dict, word_idx)</span>:</span></span><br><span class="line">    tf_shape = (M, N)</span><br><span class="line">    idf_shape = (<span class="number">1</span>, N)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">TF_matrix</span><span class="params">()</span>:</span></span><br><span class="line">        m = np.zeros(tf_shape, dtype=float)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> word <span class="keyword">in</span> word_dict:</span><br><span class="line">            <span class="keyword">for</span> doc <span class="keyword">in</span> word_dict[word]:</span><br><span class="line">                m[doc_idx[doc], word_idx[word]] = word_dict[word][doc] / doc_dict[doc]</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> m</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">IDF_matrix</span><span class="params">()</span>:</span></span><br><span class="line">        m = np.zeros(idf_shape, dtype=float)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> word <span class="keyword">in</span> word_dict:</span><br><span class="line">            c = len(list(word_dict[word].keys()))</span><br><span class="line">            m[<span class="number">0</span>, word_idx[word]] = np.log(N/c)</span><br><span class="line">        </span><br><span class="line">        m[m &lt; <span class="number">1e-6</span>] = <span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> np.repeat(m, M, axis=<span class="number">0</span>) <span class="comment"># shape(M, N)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> TF_matrix() * IDF_matrix()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">input2vec</span><span class="params">(word_list, word_idx, shape)</span>:</span></span><br><span class="line">    out = np.zeros(shape, dtype=float)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> word <span class="keyword">in</span> word_list:</span><br><span class="line">        <span class="keyword">if</span> word <span class="keyword">in</span> word_idx:</span><br><span class="line">            out[word_idx[word]] = <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">compute_Cosine</span><span class="params">(query_vec, matrix)</span>:</span></span><br><span class="line">    <span class="keyword">assert</span> matrix.shape[<span class="number">1</span>] == query_vec.shape[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    inner_product = np.dot(matrix, query_vec) <span class="comment"># shape(M,1)</span></span><br><span class="line">    norm1 = np.linalg.norm(matrix, ord=<span class="number">2</span>, axis=<span class="number">1</span>, keepdims=<span class="literal">True</span>) * np.linalg.norm(query_vec)</span><br><span class="line"></span><br><span class="line">    cosine_similarity = inner_product / norm1</span><br><span class="line">    <span class="keyword">return</span> cosine_similarity.transpose()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    <span class="comment"># get the query</span></span><br><span class="line">    string = input(<span class="string">"请输入查询词：...（按空格划分）"</span>)</span><br><span class="line">    word_list = string.split(<span class="string">" "</span>)</span><br><span class="line">    query_vec = input2vec(word_list, word_idx, shape=(N, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># compute tf-idf</span></span><br><span class="line">    tfidf_matrix = construct_TFIDF(M, N, doc_count, doc_idx, query_dict, word_idx)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># compute cosine relevance</span></span><br><span class="line">    similarity_score = compute_Cosine(query_vec, tfidf_matrix) <span class="comment">#shape(1, M)</span></span><br><span class="line">    rank = sorted([(s, i) <span class="keyword">for</span> i, s <span class="keyword">in</span> enumerate(similarity_score.tolist()[<span class="number">0</span>])], key = <span class="keyword">lambda</span> x: x[<span class="number">0</span>],reverse =<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">    print(<span class="string">"Query finished... We have following outcome!\n"</span>)</span><br><span class="line">    print(string)</span><br><span class="line">    leng = len(string)</span><br><span class="line"></span><br><span class="line">    early_break = <span class="number">5</span></span><br><span class="line">    <span class="keyword">for</span> score, idx <span class="keyword">in</span> rank:</span><br><span class="line">        <span class="keyword">if</span> score &gt; <span class="number">0.0</span>:</span><br><span class="line">            title = doc_list[idx]</span><br><span class="line">            <span class="keyword">if</span> len(word_list) == <span class="number">1</span>:</span><br><span class="line">                title = title + <span class="string">"@"</span> + str(\</span><br><span class="line">                    query_dict.get(word_list[<span class="number">0</span>], &#123;&#125;).get(title, <span class="number">0</span>)</span><br><span class="line">                    )</span><br><span class="line">            print(<span class="string">" "</span> * leng + <span class="string">"\t"</span>, title)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> early_break <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">                early_break -= <span class="number">1</span></span><br><span class="line">                <span class="keyword">if</span> early_break &lt;= <span class="number">0</span>:<span class="keyword">break</span></span><br></pre></td></tr></table></figure>
-<h4 id="3-5-Outcome"><a href="#3-5-Outcome" class="headerlink" title="3.5 Outcome"></a>3.5 Outcome</h4><p>query结果：<br><img src="/2020/04/08/Large-scaleDistributedSystem02/outcome.png" alt="query_outcome"></p>
-<p>我们可以看到，在分别输入“中国”和“经济”的时候，程序会分别返回前5个最相关的文档名称。</p>
-<p>而同时输入“中国 经济”的时候，程序返回的第一个文档名称是“<strong>中国经济走过黄金十年 转型将造福世界经济</strong>”。充分说明我们实现的模型完成了<strong>按照文档相似性查找和排序</strong>。</p>
-<h3 id="4-总结"><a href="#4-总结" class="headerlink" title="4. 总结"></a>4. 总结</h3><p>在本次实践中，学习了如何避免linux出现中文乱码问题。学会了基础的python和hadoop streaming交互，了解了hadoop streaming的基本使用。学习了TF-IDF文档模型的使用。进一步加深了对MapReduce框架的理解。</p>
+<h4 id="输出中文乱码问题"><a href="#输出中文乱码问题" class="headerlink" title="输出中文乱码问题"></a>输出中文乱码问题</h4><p>注意，这里由于一开始的时候没有对sample.txt文件进行转码，而且由于MRjob的输出设定，返回的字符串并不是utf-8编码的。因此需要手动进行一下解码（可能需要多次尝试）。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">deal_with_output</span><span class="params">(file_path)</span>:</span></span><br><span class="line">    lines = []</span><br><span class="line">    <span class="keyword">with</span> open(file_path, <span class="string">"r"</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">            line = f.readline()</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> line: <span class="keyword">break</span></span><br><span class="line">            tmp = line.strip().split(<span class="string">"\t"</span>)</span><br><span class="line">            </span><br><span class="line">            num_bytes = int(tmp[<span class="number">0</span>])</span><br><span class="line">            name = <span class="string">""</span>.join([tmp[<span class="number">1</span>][<span class="number">1</span>:<span class="number">-1</span>]])</span><br><span class="line">            </span><br><span class="line">            print(num_bytes, name.encode(<span class="string">"iso-8859-1"</span>).decode(<span class="string">"gb18030"</span>))</span><br><span class="line">            <span class="comment"># 这里还是有bug，建议根据情况自己试一下</span></span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
         <category>课程</category>
@@ -291,7 +623,7 @@
 
 </li>
 </ul>
-<h3 id="6-内存共享与同步-an-example"><a href="#6-内存共享与同步-an-example" class="headerlink" title="6 内存共享与同步: an example"></a>6 内存共享与同步: an example</h3><p><strong>__shared__</strong> declares data that is available for all threads within a certain block. (not visible to threads in other blocks)</p>
+<h3 id="6-内存共享与同步-an-example"><a href="#6-内存共享与同步-an-example" class="headerlink" title="6 内存共享与同步: an example"></a>6 内存共享与同步: an example</h3><p><strong>__shared__</strong> declares data that is available for <strong>all threads within a certain block</strong>. (not visible to threads in other blocks)</p>
 <p>Use <strong>__syncthreads()</strong> as a barrier to prevent data hazard.</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">__global__ <span class="keyword">void</span> <span class="title">stencil_1d</span><span class="params">(<span class="keyword">int</span> *in, <span class="keyword">int</span> *out)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// declare a shared array, availabel for all threads in this block</span></span><br><span class="line">    __shared__ <span class="keyword">int</span> temp[BLOCK_SIZE + <span class="number">2</span> * RADIUS];</span><br><span class="line">    <span class="keyword">int</span> gindex = threadIdx.x + blockIdx.x * blockDim.x;</span><br><span class="line">    <span class="keyword">int</span> lindex = threadIdx.x + radius;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Read input elements into shared memory</span></span><br><span class="line">    temp[lindex] = in[gindex]; </span><br><span class="line">    <span class="keyword">if</span> (threadIdx.x &lt; RADIUS) &#123;</span><br><span class="line">        temp[lindex – RADIUS] = in[gindex – RADIUS];</span><br><span class="line">        temp[lindex + BLOCK_SIZE] = in[gindex + BLOCK_SIZE]; </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Because we have no idea which thread runs first, we need to</span></span><br><span class="line">    <span class="comment">// Synchronize (ensure all the data is available)</span></span><br><span class="line">    __syncthreads( );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Apply the stencil (i.e. 1-D conv)</span></span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> offset = -RADIUS ; offset &lt;= RADIUS ; offset++)</span><br><span class="line">        result += temp[lindex + offset];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Store the result</span></span><br><span class="line">    out[gindex] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -308,56 +640,70 @@
       </tags>
   </entry>
   <entry>
-    <title>MapReduce编程实践1</title>
-    <url>/2020/04/08/Large-scaleDistributedSystem01/</url>
-    <content><![CDATA[<h3 id="MapReduce"><a href="#MapReduce" class="headerlink" title="MapReduce"></a>MapReduce</h3><p>MapReduce是一种新的分布式并行计算框架，能够在HDFS和Yarn的支持下完成海量大数据计算与处理的任务。最早起源于Google的GFS系统，是Google为了处理PB级别的网页数据而设计的。<br>MapReduce的优势在于可以对海量数据进行并行计算，并且能够高效的部署在廉价的计算机集群上，因而受到广泛使用。它的基本思想是分而治之。</p>
-<p>MapReduce借鉴了函数式程序设计语言Lisp中的思想，定义了如下的Map和Reduce两个抽象的编程接口，由用户去编程实现:</p>
-<ul>
-<li>Map: (k1; v1) -&gt; [(k2; v2)]</li>
-<li>Reduce: : (k2; [v2]) -&gt; [(k3; v3)]</li>
-</ul>
-<p>各个map函数对所划分的数据并行处理，从不同的输入数据产生不同的中间结果输出。<br>各个reduce也各自并行计算，各自负责处理不同的中间结果数据集合。</p>
+    <title>MapReduce编程实践2：倒排文档索引</title>
+    <url>/2020/04/08/Large-scaleDistributedSystem02/</url>
+    <content><![CDATA[<h3 id="1-具有payload的倒排文档索引"><a href="#1-具有payload的倒排文档索引" class="headerlink" title="1.具有payload的倒排文档索引"></a>1.具有payload的倒排文档索引</h3><p>Inverted Index(倒排索引)是几乎所有全文检索搜索引擎都在使用的一种数据索引技术。<br>采用倒排索引，对于给定的查询词(term)，能快速或取包含有该term的文档列表(the list of documents)。</p>
 <a id="more"></a>
 
-<h3 id="本次任务"><a href="#本次任务" class="headerlink" title="本次任务"></a>本次任务</h3><p>编写MR程序（java或python）对sample.txt中有关文件信息进行处理，任务如下：<br>&nbsp;&nbsp;&nbsp;&nbsp;1.统计其中各类文件的数量（按文件名后缀区分类型）<br>&nbsp;&nbsp;&nbsp;&nbsp;2.按文件的字节数大小降序排序输出文件名</p>
-<p>sample.txt 包含85行建筑设计中的各类文件信息，数据片段和格式说明如下:</p>
-<table>
-    <tr>
-        <th rowspan="3">sample.txt</th>
-        <th>日期</th>
-        <th>时间</th>
-        <th>字节数</th>
-        <th>文件名（后缀为dwg）</th>
-    </tr>
-    <tr>
-        <td>2014/10/21</td>
-        <td>07:30</td>
-        <td>3,395,145</td>
-        <td>02-01一层平面图.dwg</td>
-    </tr>
-    <tr>
-        <td>2014/10/21</td>
-        <td>07:29</td>
-        <td>924,099</td>
-        <td>02-02二层平面图.dwg</td>
-</tr></table>
-
-<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><p>环境配置</p>
+<p>简单的倒排文档索引示意图:</p>
+<p><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc1.png" alt="简单的倒排文档索引示意图"></p>
+<p>如果考虑单词在每个文档中出现的词频、位置、对应Web文档的URL等诸多属性，则简单的倒排算法就需要进一步的改进。我们把这些词频、位置等诸多属性称为有效负载（Payload）。<br><img src="/2020/04/08/Large-scaleDistributedSystem02/invdoc2.png" alt><br>一个倒排索引由大量的postings list构成，每个posting list与一个term相关联。一个posting 包含一个document id和一个payload。payload上载有term在document中出现情况相关的信息（例如：出现位置，词频等等）。</p>
+<p>前述提到，MapReduce的核心是Map和Reduce两个函数。Map用于生成会被Reduce使用的中间结果。由于MR系统是运行在分布式集群上的，所以中间结果会被Partition和Combine(可选的)。在Parition过程中，系统自动按照map的输出键进行排序，因此，进入Reduce节点的(key, {value})对将保证是按照key进行排序的，而{value}则不保证是排好序的。</p>
+<p>那如果想要对value进行排序，应该怎么办呢？</p>
+<ul>
+<li>一种办法是在Reduce任务中，对{value}表中的各个value进行排序。但当{value}列表数据量巨大、无法在本地内存中进行排序时，将出现问题。</li>
+<li>更好的办法是利用MapReduce过程中的Partition过程会对Map输出key进行排序的效应，在分发过程中就完成对value的排序。想要做到这一点，就需要将value中需要排序的部分加入到key中，使key成为复合键。 </li>
+</ul>
+<p>举例来说，本来Map任务输出的键值对是（word, (doc_titile, word_frequency)）。现在为了实现对word_frequency的排序，我们将Map的输出重置为（(word, word_frequency), doc_titile）。</p>
+<p>但这样会带来一个问题：我们仍然想要将同一个word对应的key-value pair放到同一个reduce任务下，但是现在的key是一个复合键。为此，需要实现一个新的Partitioner：从（word, word_frequency）中取出word，以word作为key进行分区。</p>
+<p>了解到这些以后，就可以进行MR倒排文档生成了。</p>
+<h3 id="2-本次任务"><a href="#2-本次任务" class="headerlink" title="2.本次任务"></a>2.本次任务</h3><ul>
+<li>倒排文档生成函数：带有payload的倒排文档索引</li>
+<li>文档查询函数：以contenttile为文本名。实现根据查询关键词，返回相关文档名（序列）</li>
+<li>提交查询返回结果的截屏</li>
+</ul>
+<p>数据样本下载地址：<a href="https://pan.baidu.com/s/1UZHOMw_uhLMBCLX9uBBAQA" target="_blank" rel="noopener">密码 : rdx8</a></p>
+<h3 id="3-代码示例"><a href="#3-代码示例" class="headerlink" title="3.代码示例"></a>3.代码示例</h3><p>环境配置</p>
 <ul>
 <li>阿里云ECS Ubuntu 16.04</li>
 <li>java: open jdk-7</li>
 <li>hadoop: 2.9.2</li>
-<li>python: 3.5<ul>
-<li>mrjob 0.7.1</li>
+<li>python: 3.5</li>
 </ul>
-</li>
-</ul>
-<h4 id="统计各类文件的数量"><a href="#统计各类文件的数量" class="headerlink" title="统计各类文件的数量"></a>统计各类文件的数量</h4><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> mrjob.job <span class="keyword">import</span> MRJob</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"></span><br><span class="line">pattern1 = <span class="string">r"[0-9]*,*[0-9]+,[0-9]&#123;3&#125;"</span> <span class="comment"># number of bytes</span></span><br><span class="line">pattern2 = <span class="string">r"\.[a-z]+"</span> <span class="comment"># file type</span></span><br><span class="line">pattern3 = <span class="string">r" [^ ]+\.[a-z]+$"</span> <span class="comment"># file name</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">str2int</span><span class="params">(input)</span>:</span></span><br><span class="line">    a = <span class="string">""</span>.join(input.split(<span class="string">','</span>))</span><br><span class="line">    <span class="keyword">return</span> int(a)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CountWorker</span><span class="params">(MRJob)</span>:</span></span><br><span class="line">    <span class="string">""" Count the number of each type of files. """</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mapper</span><span class="params">(self, file_name, line)</span>:</span></span><br><span class="line">        <span class="string">""" Input Context: Date, Time, #Bytes, Name """</span></span><br><span class="line">        file_type = re.search(pattern2, line).group()[<span class="number">1</span>:]</span><br><span class="line">        <span class="keyword">yield</span> file_type, <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">reducer</span><span class="params">(self, key, values)</span>:</span></span><br><span class="line">        <span class="keyword">yield</span> key, sum(values)</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-解决中文乱码问题"><a href="#3-1-解决中文乱码问题" class="headerlink" title="3.1 解决中文乱码问题"></a>3.1 解决中文乱码问题</h4><p>由于下载的文件不是utf-8编码，而是gbk编码的。为了后续编程方便和一致性(jieba的官方文档说如果输入的字符串是gbk编码可能会出现未知错误)，建议将文件先转码为utf-8编码。具体操作是：首先在MacOS文本编辑器的偏好设置里，将文件的打开编码设置为gbk，保存编码设置为utf-8，然后打开下载的文件，另存为…即可。然后要记得把文本编辑器的偏好设置改回来（即打开/关闭编码都最好是utf-8）。</p>
+<p>然后，将下载的文件scp到已经配好环境的ECS服务器上。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">scp local_file_path username@server:host_file_path</span><br></pre></td></tr></table></figure>
+<p>这里建议不管是不是使用云服务器，都检查一下当前使用终端的字符集是否支持中文。如果不支持，在服务器上还是会出现中文乱码问题，可以参照这个链接：<a href="https://blog.csdn.net/weixin_34236497/article/details/94046218" target="_blank" rel="noopener">ubuntu16.04解决文件中文乱码问题</a>。</p>
+<h4 id="3-2-mapper-py"><a href="#3-2-mapper-py" class="headerlink" title="3.2 mapper.py"></a>3.2 mapper.py</h4><p>与上一篇mapreduce实践不同，这次因为要实现payload，所以选用了hadoop streaming来编程。相比mrjob，hadoop streaming更为灵活，用户能够自定义更多特性，而且输入输出都是字符串的特性也比较简单好操作。具体的一些工作原理可以参考官方文档：<a href="http://hadoop.apache.org/docs/r2.9.2/hadoop-streaming/HadoopStreaming.html" target="_blank" rel="noopener">Hadoop Streaming</a>。</p>
+<p>这里简单介绍一下，hadoop streaming支持多种语言进行编程，包括java 和python。它只规定了mapper和reducer都必须是可执行文件。这次实践我们采用hadoop streaming + python。</p>
+<p>mapper.py从stdin中读入文件，它要做的事是从输入的字符串中：</p>
+<ol>
+<li>识别出文档内容和文档名称</li>
+<li>对文档内容进行分词（需要安装python第三方库jieba）</li>
+<li>返回(单词，所在文档，词频)这样的key-value pair</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> jieba</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> Counter</span><br><span class="line"></span><br><span class="line">pattern1 = <span class="string">r"&lt;[a-zA-Z]*&gt;"</span>  <span class="comment"># &lt;&gt;</span></span><br><span class="line">pattern2 = <span class="string">r"&gt;[^a-z]*"</span>  <span class="comment"># &gt;&lt;</span></span><br><span class="line">pattern3 = <span class="string">r"\".+?\""</span></span><br><span class="line"></span><br><span class="line">contents = []</span><br><span class="line">titles = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> sys.stdin:</span><br><span class="line">    result = re.search(pattern1, line)</span><br><span class="line">    <span class="keyword">if</span> result <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">        typo = result.group()[<span class="number">1</span>:<span class="number">-1</span>]</span><br><span class="line">        _text = re.search(pattern2, line).group()[<span class="number">1</span>:<span class="number">-2</span>] <span class="comment"># omit "\n" and "&gt;"</span></span><br><span class="line">        <span class="keyword">if</span> typo == <span class="string">"content"</span>:</span><br><span class="line">            contents.append(_text)</span><br><span class="line">        <span class="keyword">elif</span> typo == <span class="string">"contenttitle"</span>:</span><br><span class="line">            _text = _text[:<span class="number">-1</span>] <span class="keyword">if</span> (_text != <span class="string">""</span> <span class="keyword">and</span> _text[<span class="number">-1</span>] == <span class="string">"（"</span>) <span class="keyword">else</span> _text</span><br><span class="line">            titles.append(_text)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(len(titles)):</span><br><span class="line">    title, doc = titles[i], contents[i]</span><br><span class="line">    seg_list = list(jieba.cut(doc, cut_all=<span class="literal">True</span>)) <span class="comment"># precise mode</span></span><br><span class="line">    counter = Counter(seg_list)</span><br><span class="line">    <span class="keyword">for</span> pos, word <span class="keyword">in</span> enumerate(set(seg_list)):</span><br><span class="line">        print(<span class="string">"&#123;&#125;@&#123;&#125;\t&#123;&#125;"</span>.format(word, counter[word], title))</span><br></pre></td></tr></table></figure>
 
-<h4 id="按文件字节数降序输出文件名"><a href="#按文件字节数降序输出文件名" class="headerlink" title="按文件字节数降序输出文件名"></a>按文件字节数降序输出文件名</h4><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RankWorker</span><span class="params">(MRJob)</span>:</span></span><br><span class="line">    <span class="string">""" Ranking in the descending order of #Bytes. """</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mapper</span><span class="params">(self, file_name, line)</span>:</span></span><br><span class="line">        <span class="string">""" Input Context: Date, Time, #Bytes, Name """</span></span><br><span class="line">        num_bytes = str2int(re.search(pattern1, line).group())</span><br><span class="line">        Name = re.search(pattern3, line).group()[<span class="number">1</span>:]</span><br><span class="line">        <span class="keyword">yield</span> <span class="number">1</span>, (num_bytes, Name)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">reducer</span><span class="params">(self, key, values)</span>:</span></span><br><span class="line">        values = sorted(values)</span><br><span class="line">        <span class="keyword">for</span> num_bytes, Name <span class="keyword">in</span> values[::<span class="number">-1</span>]:</span><br><span class="line">            <span class="keyword">yield</span> num_bytes, Name</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-reducer-py"><a href="#3-3-reducer-py" class="headerlink" title="3.3 reducer.py"></a>3.3 reducer.py</h4><p>reducer要做的事情，是从stdin中读入mapper的输出，按照（单词，所有包含该单词的文档）形式组织好数据并输出。<br><strong>注意：partitioner在输出key/value pair的时候，会在key与value之间加一个“\t”</strong></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict</span><br><span class="line"></span><br><span class="line">out_dict = defaultdict(list)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> sys.stdin:</span><br><span class="line">    key, value = line.split(<span class="string">"\t"</span>)</span><br><span class="line">    word, count = key.split(<span class="string">"@"</span>)</span><br><span class="line">    out_dict[word].append(value[:<span class="number">-1</span>]+<span class="string">"@"</span>+count)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> word, value_list <span class="keyword">in</span> out_dict.items():</span><br><span class="line">    titles = <span class="string">"&lt;SEP&gt;"</span>.join(value_list)</span><br><span class="line">    print(<span class="string">"&#123;&#125;\t&#123;&#125;"</span>.format(word, titles))</span><br></pre></td></tr></table></figure>
 
-<h4 id="输出中文乱码问题"><a href="#输出中文乱码问题" class="headerlink" title="输出中文乱码问题"></a>输出中文乱码问题</h4><p>注意，这里由于一开始的时候没有对sample.txt文件进行转码，而且由于MRjob的输出设定，返回的字符串并不是utf-8编码的。因此需要手动进行一下解码（可能需要多次尝试）。</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">deal_with_output</span><span class="params">(file_path)</span>:</span></span><br><span class="line">    lines = []</span><br><span class="line">    <span class="keyword">with</span> open(file_path, <span class="string">"r"</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">            line = f.readline()</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> line: <span class="keyword">break</span></span><br><span class="line">            tmp = line.strip().split(<span class="string">"\t"</span>)</span><br><span class="line">            </span><br><span class="line">            num_bytes = int(tmp[<span class="number">0</span>])</span><br><span class="line">            name = <span class="string">""</span>.join([tmp[<span class="number">1</span>][<span class="number">1</span>:<span class="number">-1</span>]])</span><br><span class="line">            </span><br><span class="line">            print(num_bytes, name.encode(<span class="string">"iso-8859-1"</span>).decode(<span class="string">"gb18030"</span>))</span><br><span class="line">            <span class="comment"># 这里还是有bug，建议根据情况自己试一下</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-4-run-sh"><a href="#3-4-run-sh" class="headerlink" title="3.4 run.sh"></a>3.4 run.sh</h4><p>在前文中我们有提到，为了将同一个word对应的key-value pair放到同一个reduce任务下，需要实现一个新的Partitioner：从（word, word_frequency）中取出word，以word作为key进行分区。在Hadoop Streaming中这个具体应该怎么实现呢？</p>
+<p>很简单。Hadoop有一个工具类org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner， 它在应用程序中很有用。Map/reduce框架用这个类切分map的输出， 切分是基于key值的前缀，而不是整个key。举例来说：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$HADOOP_HOME</span>/bin/hadoop  jar <span class="variable">$HADOOP_HOME</span>/hadoop-streaming.jar \</span><br><span class="line">    -input myInputDirs \</span><br><span class="line">    -output myOutputDir \</span><br><span class="line">    -mapper org.apache.hadoop.mapred.lib.IdentityMapper \</span><br><span class="line">    -reducer org.apache.hadoop.mapred.lib.IdentityReducer \</span><br><span class="line">    -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner \</span><br><span class="line">    -jobconf stream.map.output.field.separator=. \</span><br><span class="line">    -jobconf stream.num.map.output.key.fields=4 \</span><br><span class="line">    -jobconf map.output.key.field.separator=. \</span><br><span class="line">    -jobconf num.key.fields.for.partition=2 \</span><br><span class="line">    -jobconf mapred.reduce.tasks=12</span><br></pre></td></tr></table></figure>
+<p>其中，Streaming使用-jobconf stream.map.output.field.separator=. 和-jobconf stream.num.map.output.key.fields=4这两个变量来得到mapper的key/value对。</p>
+<p>上面的Map/Reduce 作业中map输出的key一般是由“.”分割成的四块。但是因为使用了 -jobconf num.key.fields.for.partition=2 选项，所以Map/Reduce框架使用key的前两块来切分map的输出。其中， -jobconf map.output.key.field.separator=. 指定了这次切分使用的key的分隔符。这样可以保证在所有key/value对中， key值前两个块值相同的所有key被分到一组，分配给一个reducer。</p>
+<p>这种高效的方法等价于指定前两块作为主键，后两块作为副键。 主键用于切分块，主键和副键的组合用于排序。</p>
+<p>因此，我们只需要在执行程序的时候指明所用的partitioner和分区，就可以实现“按照一部分key的值进行排序”的功能。这里，为了避免每次启动hadoop的时候都要反复手动输入shell脚本，需要一个.sh文件来保存会在终端进行的输入。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/env bash</span></span><br><span class="line">rm ./part-00000</span><br><span class="line">hdfs dfs -rm -r bigdata/output/</span><br><span class="line"></span><br><span class="line"><span class="comment"># sprcify -D &lt;options&gt; at the beginning</span></span><br><span class="line"><span class="comment"># otherwise hadoopstreaming will fail to recognize these options</span></span><br><span class="line">hadoop jar <span class="variable">$HADOOP_HOME</span>/share/hadoop/tools/lib/hadoop-streaming-2.9.2.jar \</span><br><span class="line">-D map.output.key.field.separator=@ \</span><br><span class="line">-D mapreduce.partition.keypartitioner.options=-k1,1 \</span><br><span class="line">-D mapreduce.job.output.key.comparator.class=org.apache.hadoop.mapreduce.lib.partition.KeyFieldBasedComparator \</span><br><span class="line">-D mapreduce.partition.keycomparator.options=-k2nr \</span><br><span class="line">-input bigdata/inputs/news_tensite_xml.smarty.dat \</span><br><span class="line">-output bigdata/output/ \</span><br><span class="line">-mapper <span class="string">"python3 mapper.py"</span> \</span><br><span class="line">-reducer <span class="string">"python3 reducer.py"</span> \</span><br><span class="line">-partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner \</span><br><span class="line"></span><br><span class="line"><span class="comment"># get file from HDFS to local and visualize them</span></span><br><span class="line">hdfs dfs -get bigdata/output/part-00000 ./</span><br><span class="line">head -100 part-00000</span><br><span class="line"></span><br><span class="line"><span class="comment"># Tips:</span></span><br><span class="line"><span class="comment"># if we do not use "\t" to seperate key/value pair</span></span><br><span class="line"><span class="comment"># we need to specify</span></span><br><span class="line"><span class="comment"># -D stream.map.output.field.separator=@ \</span></span><br><span class="line"><span class="comment"># -D stream.num.map.output.key.fields=2 \</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-5-query-py"><a href="#3-5-query-py" class="headerlink" title="3.5 query.py"></a>3.5 query.py</h4><p>文档查询函数最简单的实现是：以contenttile为文本名。实现根据查询关键词，返回相关文档名（序列）。但是这里，我们想要实现的是：根据输入的word序列，查找与该序列最相关的文档，并输出文档名。</p>
+<p>因此，我们需要使用TF-IDF模型来构建文档向量，<br>$$docVec[i, :] = (w_{i1}, …, w_{ij}, …, w_{iN})$$<br>其中 $w_{ij}= TF_{ij} * IDF_{j}$<br>$$TF_{ij}=\frac{单词j在文档i中出现频率}{文档i的词数},  IDF_{j}=\frac{总文档数目}{含有单词j的文档数目}$$<br>由此，我们只需要按照输入单词序列构建查询向量，然后计算查询向量与文档向量的cosine相似度即可。</p>
+<p>具体代码实现如下：(这里设置了early break=5，也就是只print前5个最相关的文档名)</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">start = time()</span><br><span class="line">print(<span class="string">"Now loading MapReduce outcome..."</span>)</span><br><span class="line">query_dict = &#123;&#125; <span class="comment"># word-&gt;[doc_names : freq]</span></span><br><span class="line">doc_count = &#123;&#125; <span class="comment"># 文档次数统计</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> open(<span class="string">"./part-00000"</span>, <span class="string">"r"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:</span><br><span class="line">    lines = f.readlines()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> line <span class="keyword">in</span> lines:</span><br><span class="line">        word, rest = line.split(<span class="string">"\t"</span>)</span><br><span class="line">        titles = rest.split(<span class="string">"&lt;SEP&gt;"</span>)</span><br><span class="line"></span><br><span class="line">        word2doc = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> title <span class="keyword">in</span> titles:</span><br><span class="line">            doc, freq = title.strip().split(<span class="string">"@"</span>)</span><br><span class="line">            word2doc[doc] = int(freq)</span><br><span class="line">            doc_count[doc] = int(freq) + doc_count.get(doc, <span class="number">0</span>)</span><br><span class="line">        query_dict[word] = word2doc</span><br><span class="line"></span><br><span class="line">doc_list = list(doc_count.keys())</span><br><span class="line">doc_idx = &#123;doc:i <span class="keyword">for</span> i, doc <span class="keyword">in</span> enumerate(doc_list)&#125;</span><br><span class="line"></span><br><span class="line">word_list = list(query_dict.keys())</span><br><span class="line">word_idx = &#123;word:i <span class="keyword">for</span> i, word <span class="keyword">in</span> enumerate(word_list)&#125;</span><br><span class="line"></span><br><span class="line">M, N = len(doc_list), len(word_list)</span><br><span class="line">print(<span class="string">"Finished! Document dict and Word dict has been built..."</span>)</span><br><span class="line">print(<span class="string">"Time cost: &#123;:.2f&#125;\n"</span>.format(time()-start))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">construct_TFIDF</span><span class="params">(M, N, doc_dict, doc_idx, word_dict, word_idx)</span>:</span></span><br><span class="line">    tf_shape = (M, N)</span><br><span class="line">    idf_shape = (<span class="number">1</span>, N)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">TF_matrix</span><span class="params">()</span>:</span></span><br><span class="line">        m = np.zeros(tf_shape, dtype=float)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> word <span class="keyword">in</span> word_dict:</span><br><span class="line">            <span class="keyword">for</span> doc <span class="keyword">in</span> word_dict[word]:</span><br><span class="line">                m[doc_idx[doc], word_idx[word]] = word_dict[word][doc] / doc_dict[doc]</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> m</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">IDF_matrix</span><span class="params">()</span>:</span></span><br><span class="line">        m = np.zeros(idf_shape, dtype=float)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> word <span class="keyword">in</span> word_dict:</span><br><span class="line">            c = len(list(word_dict[word].keys()))</span><br><span class="line">            m[<span class="number">0</span>, word_idx[word]] = np.log(N/c)</span><br><span class="line">        </span><br><span class="line">        m[m &lt; <span class="number">1e-6</span>] = <span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> np.repeat(m, M, axis=<span class="number">0</span>) <span class="comment"># shape(M, N)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> TF_matrix() * IDF_matrix()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">input2vec</span><span class="params">(word_list, word_idx, shape)</span>:</span></span><br><span class="line">    out = np.zeros(shape, dtype=float)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> word <span class="keyword">in</span> word_list:</span><br><span class="line">        <span class="keyword">if</span> word <span class="keyword">in</span> word_idx:</span><br><span class="line">            out[word_idx[word]] = <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">compute_Cosine</span><span class="params">(query_vec, matrix)</span>:</span></span><br><span class="line">    <span class="keyword">assert</span> matrix.shape[<span class="number">1</span>] == query_vec.shape[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    inner_product = np.dot(matrix, query_vec) <span class="comment"># shape(M,1)</span></span><br><span class="line">    norm1 = np.linalg.norm(matrix, ord=<span class="number">2</span>, axis=<span class="number">1</span>, keepdims=<span class="literal">True</span>) * np.linalg.norm(query_vec)</span><br><span class="line"></span><br><span class="line">    cosine_similarity = inner_product / norm1</span><br><span class="line">    <span class="keyword">return</span> cosine_similarity.transpose()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    <span class="comment"># get the query</span></span><br><span class="line">    string = input(<span class="string">"请输入查询词：...（按空格划分）"</span>)</span><br><span class="line">    word_list = string.split(<span class="string">" "</span>)</span><br><span class="line">    query_vec = input2vec(word_list, word_idx, shape=(N, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># compute tf-idf</span></span><br><span class="line">    tfidf_matrix = construct_TFIDF(M, N, doc_count, doc_idx, query_dict, word_idx)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># compute cosine relevance</span></span><br><span class="line">    similarity_score = compute_Cosine(query_vec, tfidf_matrix) <span class="comment">#shape(1, M)</span></span><br><span class="line">    rank = sorted([(s, i) <span class="keyword">for</span> i, s <span class="keyword">in</span> enumerate(similarity_score.tolist()[<span class="number">0</span>])], key = <span class="keyword">lambda</span> x: x[<span class="number">0</span>],reverse =<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">    print(<span class="string">"Query finished... We have following outcome!\n"</span>)</span><br><span class="line">    print(string)</span><br><span class="line">    leng = len(string)</span><br><span class="line"></span><br><span class="line">    early_break = <span class="number">5</span></span><br><span class="line">    <span class="keyword">for</span> score, idx <span class="keyword">in</span> rank:</span><br><span class="line">        <span class="keyword">if</span> score &gt; <span class="number">0.0</span>:</span><br><span class="line">            title = doc_list[idx]</span><br><span class="line">            <span class="keyword">if</span> len(word_list) == <span class="number">1</span>:</span><br><span class="line">                title = title + <span class="string">"@"</span> + str(\</span><br><span class="line">                    query_dict.get(word_list[<span class="number">0</span>], &#123;&#125;).get(title, <span class="number">0</span>)</span><br><span class="line">                    )</span><br><span class="line">            print(<span class="string">" "</span> * leng + <span class="string">"\t"</span>, title)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> early_break <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">                early_break -= <span class="number">1</span></span><br><span class="line">                <span class="keyword">if</span> early_break &lt;= <span class="number">0</span>:<span class="keyword">break</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-5-Outcome"><a href="#3-5-Outcome" class="headerlink" title="3.5 Outcome"></a>3.5 Outcome</h4><p>query结果：<br><img src="/2020/04/08/Large-scaleDistributedSystem02/outcome.png" alt="query_outcome"></p>
+<p>我们可以看到，在分别输入“中国”和“经济”的时候，程序会分别返回前5个最相关的文档名称。</p>
+<p>而同时输入“中国 经济”的时候，程序返回的第一个文档名称是“<strong>中国经济走过黄金十年 转型将造福世界经济</strong>”。充分说明我们实现的模型完成了<strong>按照文档相似性查找和排序</strong>。</p>
+<h3 id="4-总结"><a href="#4-总结" class="headerlink" title="4. 总结"></a>4. 总结</h3><p>在本次实践中，学习了如何避免linux出现中文乱码问题。学会了基础的python和hadoop streaming交互，了解了hadoop streaming的基本使用。学习了TF-IDF文档模型的使用。进一步加深了对MapReduce框架的理解。</p>
 ]]></content>
       <categories>
         <category>课程</category>

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    金融大数据挖掘期末报告 |  IMNeatrh
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/dist/main.css">
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-AdvFin-Final" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  金融大数据挖掘期末报告
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/06/21/AdvFin-Final/" class="article-date">
+  <time datetime="2020-06-20T16:31:18.000Z" itemprop="datePublished">2020-06-21</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E8%AF%BE%E7%A8%8B/">课程</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> Word count:</span>
+            <span class="post-count">9.7k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> Reading time≈</span>
+            <span class="post-count">33 min</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h3 id="基于手机基站信息的城市空间特征研究"><a href="#基于手机基站信息的城市空间特征研究" class="headerlink" title="基于手机基站信息的城市空间特征研究"></a>基于手机基站信息的城市空间特征研究</h3><p>作者: 张霁雯  16307110435    </p>
+<h4 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h4><p>本文基于上海基站数据，通过巧妙的设计深入挖掘用户与基站之间的关联。一方面，以用户为基础构建了基站交互图，通过严谨合理的聚类揭示了上海市各区域内的人口流动。另一方面，综合人口流动和基站附近基础设施的统计，得到了上海各区域之间的经济发展现状，并对相关因素进行了分析。结合上述两者与其他信息得到了合理的城市功能区划分，效果十分出色。</p>
+<a id="more"></a>
+
+
+
+
+<h4 id="一、项目背景"><a href="#一、项目背景" class="headerlink" title="一、项目背景"></a>一、项目背景</h4><p>​        随着移动通信网络的不断发展，新的信息化时代即将来临。据我国工业和信息化部数据显示，2019年中国建成了13万个5G基站，预计到2020年底，5G基站将超过60万个，覆盖全国所有地级以上城市。</p>
+<p>​        基站的广阔覆盖与移动通讯设备的增多使得人机交互产生了海量的数据，这为研究城市人口空间分布和城市经济学提供了一个崭新的角度。基站是不动点，而人的活动都是有规律可循的。研究<sup>[1]</sup>表明，70%的人口只经常访问两三个地方；大部分人口停留最久的场所是住宅与工作地点。因此基站所记录的用户数据能够反映一定时空内的用户的行为规律。例如，通过对手机定位数据的分析可以获取特定用户的活动轨迹，进行行为追溯等。该项技术在本次新冠疫情期间就发挥了巨大的作用。</p>
+<p>​        基站是城市空间的一部分。用户访问基站附近的建筑与基站产生的交互数据，不仅反映了用户自身行为规律与偏好，也侧面刻画了基站所处区域具备的城市角色与功能。例如，在市政规划中，通过对特定地点附近的基站流量分析，可以帮助调整交通政策以及基础设施的建设，使得城市的居民能获得更好的出行体验。这提示我们可以根据海量的用户数据反推基站附近地理空间的功效性，为后续城市功能区划分提供了指引。</p>
+<p>​        为了更好的进行基站数据挖掘，我们需要了解基站是如何记录用户数据的。当用户开启手机，手机就会向最近的基站发出登录网络的信号，与基站建立联系。移动通信网络的信号覆盖逻辑上被设计成由若干个六边形的基站小区相互邻接而构成的蜂窝网络面状服务区，手机终端总是与其中某一个基站小区保持联系，当用户从一个区域过渡到另一区域时，手机自动进行切换。移动通信网络的控制中心会定期或者不定期地主动或被动地记录每个手机终端时间序列的基站小区编号信息，由此可以得到用户被不同基站记录的频次以及用户的位置移动情况。在本项目中，距离用户最近的基站每隔两小时会进行一次地理位置信息记录；如果用户在不同的基站覆盖区域内移动，则立即记录。由于不同个体的分布存在显著差异，而分布来自用户的移动，因此通过数据可挖掘个体移动信息，从而反映人口流动性、城市经济活跃度等宏观指征。</p>
+<h4 id="二、数据补充与说明"><a href="#二、数据补充与说明" class="headerlink" title="二、数据补充与说明"></a>二、数据补充与说明</h4><h5 id="2-1-地理位置数据"><a href="#2-1-地理位置数据" class="headerlink" title="2.1 地理位置数据"></a>2.1 地理位置数据</h5><ol>
+<li><p>上海市 <font face="courier">6160</font> 个基站的经纬度信息</p>
+</li>
+<li><p>基站附近POI数据：通过调用百度地图地点检索API，我利用 <font face="courier">python</font> 发起网页请求，获得了6160个基站附近500米内12类机构/地点的信息，并记录了数量。为了能够更好的将建筑物进行归类，我采用百度地图提供的21个以及行业分类作为基础，将建筑物最终分为12个大类，包括：美食、酒店、服务、景点、休闲娱乐、教育、医疗、交通、金融、房地产、公司企业、政府机构。我们称这12类建筑物为兴趣地点 <font face="courier">(position of interest, POI)</font> 。此外，我还通过百度地图API获取了基站所属行政区划分等信息。我最终将这些信息整理成了 <font face="courier">station_POI.csv</font> 表格，可以利用 <font face="courier">pandas</font> 一键读取。</p>
+<p>表格含有以下字段：</p>
+<table>
+<thead>
+<tr>
+<th align="center">字段名</th>
+<th align="center">描述</th>
+<th align="center">补充</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><font face="courier">station_id</font></td>
+<td align="center">基站编号</td>
+<td align="center">基础信息</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">lng</font></td>
+<td align="center">经度</td>
+<td align="center">基础信息</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">lat</font></td>
+<td align="center">纬度</td>
+<td align="center">基础信息</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">district</font></td>
+<td align="center">基站所属行政区</td>
+<td align="center">百度地图API获取</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">POI_x, x=1,…,12</font></td>
+<td align="center">附近兴趣地点<font face="courier"> x </font>的数目</td>
+<td align="center">百度地图API获取</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">street</font></td>
+<td align="center">基站所属街道</td>
+<td align="center">百度地图API获取</td>
+</tr>
+<tr>
+<td align="center"><font face="courier">business</font></td>
+<td align="center">基站附近商圈</td>
+<td align="center">百度地图API获取</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<ol start="3">
+<li><p>上海市各区基本信息：一般而言，人口更多、面积更大、经济更发达的区域内，基站记录的数据会更多。为了更好的区分上海市不同区域内的基站及人口流动特征，我利用搜索引擎获取了上海市各区的一些基本数据，包括各区的人口、面积和GDP数据。此外，根据基站所属的区域划分，我还做了一些基本统计。这些信息最终被整理成了 <font face="courier">districtsINFO.csv</font> 表格。</p>
+<p>表格含有以下字段：</p>
+<table>
+<thead>
+<tr>
+<th align="center">字段名</th>
+<th align="center">描述</th>
+<th align="center">补充</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">行政区</td>
+<td align="center">行政区</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+<tr>
+<td align="center">基站数</td>
+<td align="center">该行政区内所有基站数量</td>
+<td align="center">统计获取</td>
+</tr>
+<tr>
+<td align="center">用户数</td>
+<td align="center">被该行政区内基站记录的用户数量</td>
+<td align="center">统计获取</td>
+</tr>
+<tr>
+<td align="center">记录数</td>
+<td align="center">该行政区内所有基站的记录数总和</td>
+<td align="center">统计获取</td>
+</tr>
+<tr>
+<td align="center">GDP</td>
+<td align="center">该行政区2017年GDP数据（单位：亿元）</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+<tr>
+<td align="center">人口</td>
+<td align="center">该行政区内常住人口数目（单位：万人）</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+<tr>
+<td align="center">面积</td>
+<td align="center">该行政区面积（单位：平方千米）</td>
+<td align="center">搜索引擎获取</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<p>最终获取的所有地理数据如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">基站基础信息</th>
+<th align="center">基站附近POI数据</th>
+<th align="center">上海市各区数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>数据类型</strong></td>
+<td align="center">已有信息</td>
+<td align="center">调用百度地图API爬取所获得信息</td>
+<td align="center">搜索引擎搜索所获得信息</td>
+</tr>
+<tr>
+<td align="center"><strong>数据内容</strong></td>
+<td align="center">经纬度坐标</td>
+<td align="center">基站方圆500米内12类兴趣地点数目<br>基站所属行政区</td>
+<td align="center">上海市各区的人口、面积、GDP数据</td>
+</tr>
+</tbody></table>
+<center>表1:地理数据概览表</center>
+
+
+
+<h5 id="2-2-用户手机基站统计数据"><a href="#2-2-用户手机基站统计数据" class="headerlink" title="2.2 用户手机基站统计数据"></a>2.2 用户手机基站统计数据</h5><p>该数据描述了一段时间内，用户手机信号被基站记录的数据。表格名为 <font face="courier">mobile.csv</font> ，含有以下字段：</p>
+<table>
+<thead>
+<tr>
+<th align="center">字段名</th>
+<th align="center">描述</th>
+<th align="center">补充</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">user_id</td>
+<td align="center">用户编号</td>
+<td align="center">不同值代表不同用户</td>
+</tr>
+<tr>
+<td align="center">station_id</td>
+<td align="center">基站编号</td>
+<td align="center">不同值代表不同基站</td>
+</tr>
+<tr>
+<td align="center">count</td>
+<td align="center">用户被基站记录次数</td>
+<td align="center">一段时间内用户被基站记录的次数</td>
+</tr>
+</tbody></table>
+<h4 id="三、描述性分析"><a href="#三、描述性分析" class="headerlink" title="三、描述性分析"></a>三、描述性分析</h4><p>为了更好的厘清数据中的基本信息，为后续深入挖掘作准备，首先对数据的一些基础特征进行分析。</p>
+<h5 id="3-1-基站布局"><a href="#3-1-基站布局" class="headerlink" title="3.1 基站布局"></a>3.1 基站布局</h5><p>首先，我对基站的基础布局进行了可视化（图1）。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/1.png" style="zoom:34%;">
+
+<center>图1：基站布局散点图</center>
+
+<p>​        可以看出，上海市基站分布基本遵循“小聚落、大分散”的规律，分布与城市经济发展水平密切相关。在最为繁华的市中心聚集了大量基站，而在偏远的郊区则基站分布极为稀疏。</p>
+<p>​        此外，我们还可以发现在非城市中心地带的其他地区，出现了一些较为明显的基站聚集小块。合理推断，这应当是该区域内的核心商圈或经济活动较为密集的地区。这也比较符合上海市以城市中心商圈为核心，各区域商圈星罗棋布的现状。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/2.png" style="zoom:32%;">
+
+<center>图2：奉贤区基站聚落与商圈聚落比较</center>
+
+<p>​        为了验证我的猜想，我随机选取了图中奉贤区的基站密集处，将该处与百度地图直接搜索“奉贤区 商圈”获得的地图进行比较（图2）。可以看出基站聚落与商圈所在处基本吻合。说明“基站聚集应当是该区域内的核心商圈或经济活动较为密集的地区”的猜想基本正确，为后续用基站分布来推断区域经济活跃程度提供了依据。</p>
+<h5 id="3-2-基站所覆盖用户数据"><a href="#3-2-基站所覆盖用户数据" class="headerlink" title="3.2 基站所覆盖用户数据"></a>3.2 基站所覆盖用户数据</h5><p>其次，我对用户对基站的访问数据进行了基本的统计学分析（图3）。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/outcomes/figure/1_basic_station_statictis.png" style="zoom:30%;">
+
+<center>图3：基本统计分析</center>
+
+<p>​        可以发现，大部分基站的流量都很小，因此用户统计、访问统计和平均访问统计量都出现了长拖尾的现象。说明总体而言，上海市基站布局还不够合理，未能将大部分用户访问流量均匀得分布到各个基站上，出现了明显的“头部基站”和“尾部基站”。前者承担了较大的流量荷载压力，后者却未能发挥自己的全部作用。这暗示城市基站空间布局尚有优化空间。</p>
+<p>​        再来看上海市各区域内基站的平均用户访问次数统计。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/outcomes/figure/1_basic_dstricts_avgVisits.png" style="zoom:30%;">
+
+<center>图4：各区域内平均访问统计</center>
+
+<p>​        从中可以看出，上海市部分区域内的基站布局也出现了不平衡的现象。例如长宁区、黄浦区、静安区、徐汇区这4个区域内的基站平均访问用户分布都出现了明显的尖峰。说明部分区域内基站布局的不平衡是导致总体不平衡的原因。</p>
+<p>​        此外，从图4中也可以看出，上海市各个区域内基站所能记录的人口数据存在明显差异。闵行区、松江区、金山区的平均基站访问用户数据明显低于其他各区。从背景知识可知，这几个区域都是在上海市内经济较为不发达的地区。因此，为了更好的分析这种区域差异的来源，我进行了接下来的上海市各区域基本信息分析。</p>
+<h5 id="3-3-上海市各区域基本信息分析"><a href="#3-3-上海市各区域基本信息分析" class="headerlink" title="3.3 上海市各区域基本信息分析"></a>3.3 上海市各区域基本信息分析</h5><p><img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-%E9%87%91%E8%9E%8D%E5%8F%8A%E7%BB%8F%E6%B5%8E%E5%A4%A7%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/final/AdvFin_Report/3.gif" alt></p>
+<center>图5：上海市基站数据分区汇总</center>
+
+<p>​        在上图中，我将上海市内各个区域内的基站数目、被基站所记录的用户总数(为了能画在一张图中，取了log)，区域GDP和常驻人口数据进行了可视化。不难发现，上海市各个行政区域内的基站数目与人口的相关性较大，与GDP的相关性较小；每个行政区内的被记录用户数的log与区域内人口数据的吻合程度也相当高。这是合理的，因为基站的基础作用是满足居民的通信需求，因而和人口分布的关联程度应当比与经济的关联程度更高。</p>
+<p>​        由此，根据前述分析，我们可以得到的一个基本结论是：基站的相对分布与经济活跃程度密切相关，商圈、城市中心等经济活动密集处基站分布越密集；基站的数目与所处区域的人口数量密切相关，人口数量越多，当前区域内的基站数量可能便越多。</p>
+<h5 id="3-4-各基站附近-POI-分布"><a href="#3-4-各基站附近-POI-分布" class="headerlink" title="3.4 各基站附近 POI 分布"></a>3.4 各基站附近 POI 分布</h5><p>接着，我们来看基站附近的基础设施分布。从上述提到了12类POI中，选取了6类对居民日常生活最为重要的POI进行了可视化。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/4.png" style="zoom:50%;">
+
+<center>图6：基站附近基础设施分布</center>
+
+<p>​        在这 6 幅基础设施分布图中，颜色越深代表周围相应设施越密集。从图中可以看到很明显的地区差异，这与我之前的判断也十分符合：基站的相对分布与经济活跃程度密切相关，而经济活跃程度与以上六种基础设施分布显然是呈正相关系。这使得根据基站记录的信息来进行基础设施乃至区域经济的分析可行。</p>
+<h5 id="3-5-用户行为：兴趣因子"><a href="#3-5-用户行为：兴趣因子" class="headerlink" title="3.5 用户行为：兴趣因子"></a>3.5 用户行为：兴趣因子</h5><p>最后，为了更好的刻画用户与基站交互数据以分析用户的行为，我对用户行为进行了分析。</p>
+<p>​        已知用户 $i$ 被基站 $A$ 记录的次数为 $q_{iA}$。给定用户 $i$ ，给定用户去过的所有基站 $S_{i}$ ，则基站 $A$ 被用户访问的概率为：<br>$$<br>m_{iA} = \frac{q_{iA}}{\sum_{B \in S_i}{q_{iB}}}<br>$$<br>​        则可以定义用户 $i$ 对兴趣地点(POI) $X$ 的<strong>兴趣因子 (interest index)</strong> 为：<br>$$<br>L_{iX} = \sum_{A \in S_i}{ m_{iA} \cdot n_{AX} }<br>$$<br>​        其中 $n_{AX}$ 表示基站 $A$ 附近兴趣地点(POI) $X$ 的个数。 若对用户 $i$ 来说 $L_{iX}$ 最大， 称用户 $i$ 对兴趣地点 $X$ 最感兴趣。</p>
+<p>具体的数据处理细节如下：由于用户数目太多，因此使用spark来进行大规模数据的运算。  </p>
+<ol>
+<li>首先，对基站数据进行清洗。在给定的6160个基站中，删除了位置不在上海的基站，得到6095个基站。  </li>
+<li>然后，对用户数据进行清洗。由于用户访问过的基站不完全在 <font face="courier">station.csv</font> 中，因此删除了在给定基站之外的用户访问记录。 </li>
+<li>最后，根据用户对基站的访问数据，删除了没有被用户访问过的基站。<br>最终对 4069287 条用户访问基站数据进行了上述数据处理，并最终得到了 77937 个用户的兴趣因子。</li>
+</ol>
+<p>选取12个POI中得分最高的3个作为用户的兴趣所在，可以得到以下词云图。词汇的字体越大，表示占比越多。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/5.png" style="zoom:40%;">
+
+<center>图7：词云图</center>
+
+<p>​        从图7中可以发现，在用户兴趣因子最高的前3个POI中，“公司企业”非常显著。这说明在用户的移动过程中，工作或是最主要的影响因素。交通设施在用户最感兴趣的POI中也占了不小的比例，暗示大部分用户在住宅–工作地点的移动过程中较为依赖公共交通设施。这与上海市的基本民情也十分符合。只有在工作和通勤之余，才能考虑休闲和其他事务。因此我们可以发现：尽管休闲娱乐、美食在图 7-(1)和 7-(2) 的词云图中都会出现，但占比始终不高。只有在图 7-(3) 中才较为突出。</p>
+<p>​        此外，从所有这些用户中，我随机选取了10位最感兴趣地点分别为公司企业和旅游景点的用户，可视化了轨迹 (图8)。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/6.png" style="zoom:48%;">
+
+<center>图8：用户轨迹</center>
+
+<p>​        从轨迹中可以看到，这两类用户的行为相差很大。最感兴趣地点为公司企业的用户轨迹呈现明显的条带状，具有典型的郊区 – 市中心通勤特征，说明用户很大概率为常住上海的工作人士。相比之下，最感兴趣地点为旅游景点的用户轨迹呈现两种态势：(1)松散的条带状，代表为ID是63349的用户；(2)小范围内的聚集状，代表为ID是33958的用户。</p>
+<p>​        我们将用户63349和用户33958访问频次最多基站附近的景点在百度地图上标识如下图：</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/7.png" style="zoom:48%;">
+
+<center>图9：景点标识</center>
+
+<p>​        容易发现，图 8-(2) 中右下方的用户聚集区与迪士尼乐园存在明显相关性，且由于这部分用户的轨迹只存在于这一小部分地区，可以推断这些应当是特意到上海迪士尼乐园游玩的短途旅客。而用户63349的轨迹一直从郊区的景点朱家角一直延伸到市内，说明其在上海的停留时间应该不短，可能是一位长途旅客。</p>
+<p>​        利用兴趣因子选取的用户特征如此不同，说明我们所定义的该指标能够很好的概括用户的特性。</p>
+<h4 id="四、建模分析"><a href="#四、建模分析" class="headerlink" title="四、建模分析"></a>四、建模分析</h4><h5 id="4-1-基于区域熵的地点研究"><a href="#4-1-基于区域熵的地点研究" class="headerlink" title="4.1 基于区域熵的地点研究"></a>4.1 基于区域熵的地点研究</h5><p>在生态学中，研究人员使用区域熵来衡量区域内生物多样性<sup>[2]</sup>：多样化的环境倾向于表现出物种的均匀分布（在我们的案例中是用户），而多样化程度较低的环境倾向于表现出偏斜的分布。</p>
+<p>​        在本项目中，区域熵的定义过程如下： </p>
+<p>​        已知用户 $i$ 被基站A记录的次数为 $q_{iA}$，用户 $i$ 去过的所有地点集合为 $\Psi_i$ 。定义用户 $i$ 被基站A记录的概率为 $p_{iA}$<br>$$<br>p_{iA} = \frac{q_{iA}}{ \sum_{X \in \Psi_i}{q_{iX}} }<br>$$<br>​        已知去过地点A的所有用户集合为 $\Phi_A$。则地点A的熵 $E_A$ 被定义为：<br>$$<br>E_A = - \sum_{i \in \Phi_A} p_{iA} \log{p_{iA}}<br>$$</p>
+<p>​        由此，我们可以计算出所有地点的区域熵，如下图所示。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/outcomes/figure/3.1_entropy2.png" style="zoom:60%;">
+
+<center>图10：区域熵</center>
+
+<p>​        首先，从图10左侧的“熵——用户访问次数”散点图中可以看出，被更多的用户访问的地点倾向于具有更高的熵。因此，熵是衡量某区域受欢迎程度的极佳指标。此外，图10右侧的熵分布图在熵值为 2 和熵值为 5.5 附近分别有 2 个峰值，这说明不同区域内的基站具有不同的类型，从而导致区域熵分布不具有同一性。因此，可以对已有基站数据进行聚类分析。</p>
+<h5 id="4-2-基于-Louvain-算法的城市社区划分及人口流动性研究"><a href="#4-2-基于-Louvain-算法的城市社区划分及人口流动性研究" class="headerlink" title="4.2 基于 Louvain 算法的城市社区划分及人口流动性研究"></a>4.2 基于 Louvain 算法的城市社区划分及人口流动性研究</h5><p>行政区划是政府部分根据地区发展和人力、物力资源的空间分布对城市的划分。然而，由于上海的快速发展以及市场经济的影响，当前的人群活动区域与真实的行政区划未必一致，如何快速、准确地获取人群活动区域是新型城市化建设面临的一大挑战。</p>
+<p>​        为此，我们可以使用移动互联网用户手机连接基站的记录对重新划分城市社区——对基站数据进行聚类分析。这需要对基站特征进行深入挖掘。由前述分析可知，用户访问基站附近的建筑与基站产生的交互数据，不仅反映了用户自身行为规律与偏好，也侧面刻画了基站所处区域具备的城市角色与功能。因此，除了使用基站附近的POI数据来作为其特征，用户与基站的交互数据也应当被纳入模型的考虑范围。如果只考虑用户与基站的交互数据，就是一个典型的二部图，但此处只需要使用二部图的一半——基站，来进行聚类分析。因此，我们需要一个将用户与基站交互数据归纳为基站特征的方法。</p>
+<p>​        利用图来进行基站特征的建模是一个比较合理的选择。首先，用户和基站数据的交互可以被看作一个邻接表，天然符合图的特点。其次，推荐系统的协同过滤算法启示我们：如果一个用户和两个物品的交互非常多，那么大概率这两样物品相似或具有某种关联。这使得通过用户与物品的交互（本项目中是用户与基站的交互）来构建物品之间的关系成为可能。因此，我选择使用共有用户来构建图中的边，使用基站的POI表示向量来构建边的权重。算法如下：</p>
+<h6 id="图的建立"><a href="#图的建立" class="headerlink" title="图的建立"></a><font color="black">图的建立</font></h6><p>​        首先定义了共有用户的概念：给定两个基站A和B，定义用户i被基站A记录的次数为 $q_{iA}$ , 被基站B记录的次数为 $q_{iB}$，定义基站A被所有用户的平均访问数为<br>$$<br>\mu_A = \frac{1}{|\Phi_A|} \cdot \sum_{j=1}^{n}{q_{jA}}<br>$$<br>​        其中 $\Phi_A$ 为去过地点A的所有用户集合。如果<br>$$<br>q_{iA} &gt; \mu_A \quad and \quad q_{iB} &gt; \mu_B<br>$$<br>​        则称用户 $i$ 为基站 A 和基站 B 的共有用户，称基站 A 和基站 B 是用户 $i$ 的活跃地点。若两个基站之间存在共有用户，则认为基站间存在一条边。</p>
+<p>​        定义边的权重为两个基站归一化POI表示向量的 Cosine Similarity。</p>
+<p>​        这样做的好处是：(1) 我们选择的共有用户对于基站A和基站B的访问一定是显著的，而非偶然性经过，排除了一定的数据噪声。因此共有用户更多的基站之间的边数目会更多，联系更紧密。(2) 利用POI表示向量的Cosine Similarity来定义基站之间边的权重，可以让两个更相似的基站间的权重更大，更容易被划分到同一社区中。总体而言，这样的图构建方式是合理的。</p>
+<p>具体的数据处理过程如下：</p>
+<ol>
+<li>由于数据中含有7万多名用户，数据量太多。因此首先对用户进行了筛选，过滤曾去过上海以外地方的用户。然后，按照上述定义，我们得到了64005个共有用户。</li>
+<li>考虑到基站只是记录了短时间内用户的活跃地点，因此如果用户在上海市内过于活跃，则说明该用户的数据并没有太大意义。据个例子就可以明白，若用户为一名司机，则司机的职业就是在上海市内不停游走，导致用户的活跃地点数据并不能反映两个地点之间的联系。因此，我们过滤了活跃地点&gt;20的用户，得到了42965个种子用户。</li>
+<li>根据这42965个种子用户，我们构建了一个目标Graph的候选边集合 $\tilde{E}$。$\tilde{E}$ 中大约含有上百万条边，如果单纯的利用这上百万条边来构建Graph，则会造成一些噪声。我们的边是利用用户得来的，并不是所有用户对地点的访问都是有意义的。所以对得到的边，我又进行了过滤：删除掉了两个基站表示向量的 Cosine Similarity 过小 ($\le 0.01$) 的边。</li>
+<li>最终我们构建的图 $G=(V, E)$ 含有 327530 条边和 4345 个基站。图的度分布如下：</li>
+</ol>
+<h6 id="社区分割算法"><a href="#社区分割算法" class="headerlink" title="社区分割算法"></a><font color="black">社区分割算法</font></h6><p>​        社区分割是 graph 领域聚类算法的别称。模块度是一种评估社区划分好坏的度量指标，这个概念由Newman在2003年提出。它的物理意义是社区内部边的权重减去所有与社区顶点相连的边的权重和。模块度 (Modularity) 的定义如下：<br>$$<br>Q = \frac{1}{2m} \sum_{i,j}{ \left[  A_{i,j}- \frac{k_i k_j}{2m}  \right] \delta(c_i, c_j) }<br>$$<br>​        其中 $A_{i,j}$ 是边 $(i,j)$ 的权重, $k_i$ 是结点 $i$ 的度数, $c_i$ 是结点 $i$ 所属社区的 Index,  $m$ 是整个网络的总度数。</p>
+<p>​        Louvain 算法是基于模块度的聚类算法，或称社区分割算法。算法使用模块度来作为优化的目标（最大化社区的模块度），是一个无监督聚类算法。直观上来看，模块度倾向于将更相似的结点划分到同一个社区中，其相似性由两样东西衡量：结点之间的联系是否紧密，结点之间的权重是否很大。这与我们之前的讨论不谋而合。实验表明，Louvain 算法能够较好的平衡结点之间联系与结点之间权重对模块度的影响，结果比较符合真实的社区结构。</p>
+<p>​        采用Louvain 算法对前一步构建的基站图进行社区划分的结果如图11所示。经过7次迭代，算法将 4345 个基站划分为了9个社区。图11 (1) 的图例标注了每个社区的中心结点。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/8.png" style="zoom:40%;">
+
+<center>图11：社区分割结果与上海市行政区划对比</center>
+
+<h6 id="社区分割结果与人口流动性分析"><a href="#社区分割结果与人口流动性分析" class="headerlink" title="社区分割结果与人口流动性分析"></a><font color="black">社区分割结果与人口流动性分析</font></h6><p>​        Louvain 算法的社区分割呈现出一块块的“城市聚落”。我们将算法得到的社区与上海市行政区划分进行了对比。可以发现，算法得到的社区分割结果与行政区划分非常相近，分割出社区的边界与行政区划的边界重合了大半。可以将 图11 中 7 个较为显著的社区（用社区中心结点表示）所覆盖的行政区整理如下表：</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">2905</th>
+<th align="center">329</th>
+<th align="center">1769</th>
+<th align="center">1448</th>
+<th align="center">899</th>
+<th align="center">288</th>
+<th align="center">2636</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">覆盖<br>行政区</td>
+<td align="center">青浦<br>松江<br>闵行</td>
+<td align="center">松江<br>闵行</td>
+<td align="center">宝山<br>浦东<br>杨浦</td>
+<td align="center">奉贤<br>南汇</td>
+<td align="center">嘉定<br>青浦</td>
+<td align="center">静安、徐汇<br>长宁、普陀<br>虹口、黄浦<br>崇明</td>
+<td align="center">金山</td>
+</tr>
+</tbody></table>
+<p>​        从上表和图11中能得到一个简单结论是，被划分到同一社区的基站在地理上都相距不远。这启迪了我们从算法层面对结果进行解释：由于我们的社区分割算法是由模块度进行指导的，而模块度倾向于将联系更紧密、更相似的基站划分到一起——也就是说，将共有用户更多、POI向量更相似的基站划分到一起。大胆推测，这样的社区分割结果可能是由于上海市各个区域之间的人口流动造成的。人口流动较为密集的区域中的基站，共有用户数量更多，因此在社区分割算法的计算过程中更有可能被划分到一起。当然，基站之间的POI相似度也会影响社区划分结果，但从结果中可以看出，这是划分结果的次要影响因素（以POI为核心的聚类算法应当呈现出一种从中心向四周扩散的趋势，在4.3中将会提及）。</p>
+<p>​        为了验证上述猜想，我们试图可视化上海市各个区域之间的人口流动结果。由于给定的基站数据未曾标明用户的移动轨迹，因此需要对数据进行分析。在之前利用兴趣因子对用户行为进行的挖掘中，我们已经发现“公司企业”和“交通设施”是用户兴趣因子最大的两类POI，从而得出的结论是：在用户的移动过程中，工作或是最主要的影响因素。因此，工作地点和居住地点应该是用户停留次数最多、访问最密集的地点。基于此，我们将用户访问次数最多的前两个基站作为其居住地和工作地，绘制了以下的人口流动矩阵（图12）。其中图12 (a)中的矩阵每一格 $M(i,j)$ 的值代表了从 $i$ 地流向 $j$ 地人口数的 $log_{2}$ 对数；图12(b)中矩阵是基于图12(a) 计算得到的相关性矩阵，数值越接近1代表两地越相关。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/10.png" style="zoom:48%;">
+
+<center>图12：人口流动矩阵</center>
+
+<p>​        从图12 (b) 中可以发现，左上角的5个区之间人口流动非常密集，这五个区是黄浦、徐汇、长宁、静安和普陀，因此在图11的社区分割结果中，这5个区都被划分到了一起。值得注意的是，崇明区是典型的上海郊区，但是也与这5个位于上海中心的区域被划分在了一起，这可能是由于算法初始化时将位于两地的基站划分在了同一社区，而基于模块度的算法有时会倾向于形成更大的社团结构，因此在后续的迭代中没有将两个社区划分开。此外，金山区被单独划分为了一个社区的原因也可以在图12中轻易找到：从图12 (a)中可以看到金山区所处的行和列呈现出一个明显的暗色区域，表明它既很少向别的区域输送人口，也很少有人移居或到此处工作；图12 (b)的相关系数就更为直观，金山区是唯一一个和所有其他区域的相关系数都小于 $0.10$ 的区域，因此被单独划分为了一个社区。</p>
+<p>​        人口流动矩阵印证了我们的猜想：图11的社区分割结果是由于上海市各个区域之间的人口流动造成的。此外，中心城区人口流动的频繁与偏远程度人口流动的凝滞也侧面印证了人口流动与经济发展程度是相关的。</p>
+<h5 id="4-3-基于-POI-的区域经济增长因素分析"><a href="#4-3-基于-POI-的区域经济增长因素分析" class="headerlink" title="4.3 基于 POI 的区域经济增长因素分析"></a>4.3 基于 POI 的区域经济增长因素分析</h5><p>党的十九大报告指出，“我国经济已由高速增长阶段转向高质量发展阶段，正处在转变发展方式、优化经济结构、转换增长动力的攻关期，建设现代化经济体系是跨越关口的迫切要求和我国发展的战略目标”。而在现代城市中，经济的持久健康发展需要城市不断调整自身的功能布局与产业结构，建立产业功能区，实现城市与产业耦合共生。这对城市规划提出了很高要求。</p>
+<p>​        由于Louvain 算法的结果较大程度的受区域间人口流动的影响，因此城市中一些功能性建筑(包括基础设施、娱乐设施等)的重要性其实是被忽略的。为了更好的挖掘城市基础设施建设与区域经济发展的关系，该部分将着重探索基站附近 POI 的作用和影响。</p>
+<p>​        首先，我们对上海市16区域内的基础设施（教育、医疗、交通、生活服务、政府机构）进行了简单的可视化，如图13所示。上海市各区域基础设施呈现出崎岖不平的地貌环境，中间高，四周低。从图中可以看到，上海市内的基础设施较为集中的几个区域是静安区、徐汇区、长宁区和黄浦区。而除浦东新区之外，这几个区域无一例外的都位于上海市中心地带。</p>
+<p><img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-%E9%87%91%E8%9E%8D%E5%8F%8A%E7%BB%8F%E6%B5%8E%E5%A4%A7%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/final/AdvFin_Report/9.gif" alt></p>
+<center>图13：上海市各区域基础设施地貌</center>
+
+<p>​        接着，我们采用GMM模型以基站附近的基础设施数据（教育、医疗、交通、生活服务、政府机构）作为基础对上海市内的6160个基站进行了聚类分析。由于GMM模型需要指定类的个数，所以我们还进行了模型遍历，并利用BIC和AIC（ 图14 (a) ）选择了最优的模型。模型最终的聚类效果如图14 (b) 所示。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/11.png" style="zoom:40%;">
+
+<center>图14：GMM聚类分析</center>
+
+<p>​        以POI为核心聚类算法的聚类结果呈现出从中心向四周扩散的趋势。正如 图13 中所示的那样，在城市中心地带集中了大量的基础设施，导致分布在城市中心的基站被分在了一起。但同时也可以看到，橙色的点（代表附近基础设施最为集中的一类基站）在上海市的外围也有分布，说明尽管上海市的16个区域之间存在着明显的基础设施差异，但在外围区域的局部地点，其基础设施密度可能与城市中心相差无几。此外，还可以看到城市外围的基站分布出现了明显的族群现象：中心为粉色点与紫色点，靠近中心的为绿色点，外围为蓝色点，弥散区域为黄色点（图15）。这也与之前上海市基站分布“小聚落、大分散”，以城市中心商圈为核心，各区域商圈星罗棋布的现状相吻合。整体上，上海市的城市化是从中心向四周扩张的。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/12.png" style="zoom:38%;">
+
+<center>图15：城市外围聚类族群</center>
+
+<p>​        在此前的描述性分析中，我们知道基站的相对分布与经济活跃程度密切相关，商圈、城市中心等经济活动密集处基站分布越密集。因此，基站、尤其是基站附近的基础设施数据应当能够反映基站附近的经济繁华程度。由于我们很难获得基站附近的比较有代表性的经济指标，因此在这里只能以上海市16个区域为基本单位进行分析。我们将12个POI（美食、酒店、服务、景点、休闲娱乐、教育、医疗、交通、金融、房地产、公司企业、政府机构）作为基本变量，用决策树分析了其与区域GDP之间的关系。每个变量对GDP的贡献如下图所示:</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/16.png" style="zoom:50%;">
+
+<center>图16：相关变量贡献率</center>
+
+<p>​        从该决策树中分析可得到，对GDP最主要的影响因素是区域内公司企业的数量，其次是交通、医疗、人口、面积、政府机构、房地产与教育。公司企业是上海城市经济得以高质量发展的主推力。交通、医疗、房地产、教育与政府机构为城市经济持续健康发展提供了有力的后勤支撑。人口和土地面积是经济发展的基本保障。总体而言，上海已经构建了“人口—城市—产业”协调发展的基本布局。</p>
+<h5 id="4-4-城市功能区划分"><a href="#4-4-城市功能区划分" class="headerlink" title="4.4 城市功能区划分"></a>4.4 城市功能区划分</h5><p>综合 4.2 和 4.3 得出的结果，我们得到了城市功能区划分如下图17所示。不同的颜色代表不同的区块，同一颜色的区域说明此区块中的基站构成一个稳定的社区，即拥有较为稳定的人口活动和类似的城市设施。</p>
+<img src="/Users/zhangjiwen/MyFiles/study/My_3_Junior/Junior-3-Fudan/1-金融及经济大数据挖掘/final/AdvFin_Report/17.png" style="zoom:33%;">
+
+<center>图17：城市功能区划分</center>
+
+<p>​        其中Class 0到2的标签由所属基站的Top POI进行选举：Class 0 标记的基站大部分Top POI都为公司企业，因此被标记为核心功能区；Class 1标记的基站大部分Top POI都为房地产，因此被标记为居民区；Class 2标记的基站大部分附近Top POI是休闲和景点，因此被标记为旅游线路区。而Class 4 和 Class 5由于所属基站的Top POI 比较平均，因此采用地理位置对其进行分类，属于上海的郊区。</p>
+<blockquote>
+<p>给定基站 $A$ 的 POI 向量：$Vec_{A} = (x_1, x_2, …, x_{12}), \quad x_i = 基站,A,附近兴趣地点,i,的数目$ ，基站 $A$ 的 Top POI 定义为<br>$$<br>Top ,, POI = arg\max_{i} \left{x_i, ,,i=1,…,12\right}<br>$$<br>即基站 $A$ 附近最多的一类建筑所属的类别。</p>
+</blockquote>
+<h4 id="五、总结与分析"><a href="#五、总结与分析" class="headerlink" title="五、总结与分析"></a>五、总结与分析</h4><p>在本次项目中，我们对数据进行了翔实而仔细的分析，得到了以下的结论：</p>
+<ul>
+<li>上海市基站分布基本遵循“小聚落、大分散”的规律，分布与城市经济发展水平密切相关。</li>
+<li>上海市基站布局还不够合理，未能将大部分用户访问流量均匀得分布到各个基站上，出现了明显的“头部基站”和“尾部基站”。城市基站空间布局尚有优化空间。</li>
+<li>提出了兴趣因子来建模用户偏好，能够较好的反映用户的特性。</li>
+<li>上海市不同区域内的基站具有不同的类型，区域熵分布不具有同一性。</li>
+<li>上海市区域之间的人口流动具有地理偏向性，地理位置相近的地点人口联系较为紧密。人口流动也与经济发展程度相关，经济活动较为密集的市中心城区内人口流动也较为频繁。</li>
+<li>上海市的城市化是从中心向四周扩张的。对区域经济影响最大的因素是区域内公司企业的数量，其次是交通、医疗、人口、面积、政府机构、房地产与教育。</li>
+<li>上海市城区总体可以划分为5类，分别为：核心工作区、居民生活区、旅游线路区、近郊区和远郊区。</li>
+</ul>
+<p>尽管通过数据挖掘，我们得到了以上有价值的结论，但项目实践过程还是有一些不足之处：首先，由于获得的基站数据缺乏时间和空间维度，在具体的人员流动上面无法作出有效的建模，因此所获得的城市空间特征并不完善；其次，由于基站附近经济数据（例如基站附近商户的营业额）的缺失，导致我们无法进行进行更细粒度的区域经济增长因素分析，是另一个遗憾。如果能够获得这些数据，相信本项目的建模会更加精确，也能做出更多有意义的分析。</p>
+<h4 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h4><p>[1] 谭克俭. 移动通信大数据研究揭示人口流动规律[N]. 中国人口报,2020-01-03(003).</p>
+<p>[2] Cranshaw, Justin &amp; Toch, Eran &amp; Hong, Jason &amp; Kittur, Aniket &amp; Sadeh, Norman. (2010). Bridging the gap between physical location and online social networks. UbiComp’10 - Proceedings of the 2010 ACM Conference on Ubiquitous Computing. 119-128. 10.1145/1864349.1864380. </p>
+<p>[3] Blondel, V.D., Guillaume, J., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks.</p>
+<p>[4] 刘恒鑫.城市轨道交通规划与城市发展的互动作用[J].人民交通,2020(05):87+89.</p>
+<p>[5] 张景波. 城市经济高质量发展的空间差异及收敛性研究[D].东北财经大学,2019.</p>
+<p>[6] 谢瑞武.产业功能区如何推动城市高质量发展[J].开放导报,2019(06):77-80.</p>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>Copyright： </strong>
+              Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source.
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2020/06/21/AdvFin-Final/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/" rel="tag">数据挖掘</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/04/09/AdvancedBigdataAnalysis01/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">高级大数据解析01：CUDA</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'Lrfe6IJHc09LPCyRrfp1fR4B-MdYXbMMI',
+        app_key: 'QVLBOM1PFMK2EKyIwkzYNVpH',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2020
+        Judy_Earth
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="IMNeatrh"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E8%AF%BE%E7%A8%8B/">课程</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['Welcome to the Blog of Earth!', '', ''],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.6/unpacked/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script>
+  var ayerConfig = {
+    mathjax: true
+  }
+</script>
+
+
+
+    
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+    
+  </div>
+</body>
+
+</html>
