@@ -105,8 +105,6 @@
       <h2 id="01-神经网络与深度学习"><a href="#01-神经网络与深度学习" class="headerlink" title="01 神经网络与深度学习"></a>01 神经网络与深度学习</h2><p><strong>利益相关：课程成绩：A / 4.0</strong></p>
 <p><strong>推荐程度：★★★★☆</strong></p>
 <p>本门课程的名称是神经网络与深度学习，顾名思义就知道讲的是network那点事。整个学期一共16次课，第一周是intro最后一周是review，中间的14次课介绍了MLP，CNN，RNN，Auto Encoder-Decoder，GAN 和 Meta-learning。课程一共1次Lab，3次小Project，一个期末Project。评分标准是 出席(10%) + Lab(10%) + 3次小Project(40%) + 期末Project(40%)。</p>
-<a id="more"></a>
-
 <p>总体而言这门课的工作量比较大。Lab是入门级难度，帮助以前没有写过torch的同学尽快熟悉框架。对于之前用过torch的同学来说，这个Lab基本等于送分（笑），就是题量大，熟手也要做差不多一天。Lab之后的第一个$PJ$ 是用Matlab 手写 MLP 和一层CNN，并且手动求导+误差反向传播。课本上的反向求导公式都是关于one sample的，通常训练网络都是mini-batch，所以从one sample到mini-batch这中间还是有些运算需要自己动手去算一下。这个很有意思，可以帮助深入理解误差反向传播。</p>
 <p>第二个$PJ$ 是关于CNN的，一共需要完成两个任务：(1)在 CIFAR-10 数据集上训练一个网络，占 60% 的分数；(2)验证Batch Normalization，占 30% 的分数。这个 $PJ$ 是由两个助教设计的，每个助教都以为自己设计的是一整个$PJ$ ，所以最后这个$PJ$ 的工作量就是正常$PJ$ 的两倍了呢（笑）。没个五六天的基本做不完，整的就是心态。此外，因为 CIFAR-10 数据集比较好训，第一个任务最后的performance 如果没上 <strong>0.90</strong> 算结果比较差的，可能会影响成绩（所以我和其他的同学都卷上了 <strong>0.93</strong> ，因此也花了比较多的时间）。这个 $PJ$ 有 10% 的附加分，不算很难，关键要理解助教的意思，建议做一下。做之前可以看看这篇文章 <a href="https://arxiv.org/abs/1805.11604" target="_blank" rel="noopener">How Does Batch Normalization Help Optimization?</a></p>
 <p>第二个$PJ$ 发布不久，在5月8日老师就发布了最后的 Final Project，DDL是6月20号。看似时间很充裕，但其实5月8日你还在做第二个 Project。此外，6月还有一大堆其他课的期末考试和期末DDL，所以这个时间还是非常紧张的。Final Project 是一个船新的任务：Scene Text Recognition。怎么说呢，我当时选这门课的时候真的没想到最后是要整这么一个东西的 : ) ，Amazing！一般来说 STR 分为两个阶段，第一个阶段是从图片中识别出文本区域，与CNN更相关；第二个阶段是给定文本区域识别出其中的文本，与RNN更相关。我倒是也可以理解老师的意图，用这样一个 Project 一次性检测了我们对于 CNN 和 RNN 的理解与运用，但老师可能把我们想的太厉害了 : ) 。在最后兵荒马乱的期末季我根本没时间好好研究 STR 的经典论文和代码的具体实现，最后这个 Project 沦为了 github 调包比赛，非常单纯的从 github 上下载代码 – 本地调试 – 跑通 – over。我所在的小组最开始尝试使用的end-to-end 模型 FOTS 效果特别差 (可能是由于 GPU 显存不够无法联合训练导致的，也很可能是商汤美化了论文里的结果…总之在我们的数据集上的真的非常差，而且训练时间特别长，十分鸡肋)，前期浪费了不少时间。后来虽然换成了 two-stage 模型，但由于数据集里面的图片分辨率比较大，two-stage 模型从头到尾训练完成大约就需要 2 天时间，所以也没有更多的时间给我们改动模型、测试效果了。其实还是比较遗憾的，这个 Project 做的十分潦草，最后的结果也很一般。其实我觉得整一个所有人都不熟悉的 Scene Text Recognition 新任务，还不如单纯发布一个关于 RNN 的 Project ，至少可以做的比较深入，而不是浅尝辄止。唉，做完这个 Project 之后我觉得我对 cv 丧失了兴趣。</p>
@@ -203,7 +201,7 @@
   <nav class="article-nav">
     
     
-      <a href="/2020/06/21/AdvFin-Final/AdvFin-Final/" class="article-nav-link">
+      <a href="/2020/06/21/AdvFin-Final/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
         <div class="article-nav-title">基于手机基站信息的城市空间特征研究</div>
       </a>
